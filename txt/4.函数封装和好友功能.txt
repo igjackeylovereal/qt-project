@@ -1,0 +1,461 @@
+函数封装
+服务器
+MyTcpSocket 的 recvMsg 函数，没有参数，返回值是 PDU*，将读取部分代码封装成函数
+处理封装成函数，参数是 PDU，返回值也是 PDU
+新建一个类 MsgHandler，新建一个 PDU* 类型的成员变量
+MyTcpSocket 类定义 MsgHandler 指针类型的成员变量，在构造函数中 new 出来
+MsgHandler 创建每一个请求的处理函数，返回值为 PDU*
+响应封装成函数，参数是参数列表为空
+
+
+class MyTcpSocket : public QTcpSocket
+{
+    Q_OBJECT
+
+public:
+    MyTcpSocket();
+    ~MyTcpSocket();
+    QString m_strLoginName;
+    MsgHandler* m_pMH; //新增成员变量
+    void sendMsg(PDU* pdu);
+    PDU* readMsg();
+    void recvMsg();
+
+public slots:
+    void clientOffline();
+};
+
+MyTcpSocket::MyTcpSocket()
+{
+    connect(this, &QTcpSocket::readyRead, this, &MyTcpSocket::recvMsg);
+    connect(this, &QTcpSocket::disconnected, this, &MyTcpSocket::clientOffline);
+    m_pMH = new MsgHandler;
+}
+
+MyTcpSocket::~MyTcpSocket()
+{
+    delete m_pMH;
+}
+
+void MyTcpSocket::sendMsg(PDU* pdu)
+{
+    if (pdu == NULL)
+    {
+        return;
+    }
+    this->write((char*)pdu, pdu->uiTotalLen);
+    qDebug() << "send msg pdu->uiTotalLen" << pdu->uiTotalLen
+             << "pdu->uiMsgLen" << pdu->uiMsgLen
+             << "pdu->uiMsgType" << pdu->uiMsgType
+             << "pdu->caData" << pdu->caData
+             << "pdu->caData+32" << pdu->caData+32
+             << "pdu->caMsg" << pdu->caMsg;
+    free(pdu);
+    pdu = NULL;
+}
+
+PDU* MyTcpSocket::readMsg()
+{
+    qDebug() << "recvMsg 接收消息长度" << this->bytesAvailable();
+    //先读取 pdu 总长度这个成员变量
+    uint uiPDULen = 0;
+    this->read((char*)&uiPDULen, sizeof(uint));
+    //根据总长度构建 pdu，读取结构体中剩余的成员变量
+    uint uiMsgLen = uiPDULen - sizeof(PDU);
+    PDU* pdu = mkPDU(uiMsgLen);
+    this->read((char*)pdu+sizeof(uint), uiPDULen-sizeof(uint));
+    qDebug() << "recvMsg pdu->uiTotalLen" << pdu->uiTotalLen
+             << "pdu->uiMsgLen" << pdu->uiMsgLen
+             << "pdu->uiMsgType" << pdu->uiMsgType
+             << "pdu->caData" << pdu->caData
+             << "pdu->caData+32" << pdu->caData+32
+             << "pdu->caMsg" << pdu->caMsg;
+    return pdu;
+}
+
+PDU* MyTcpSocket::handleMsg(PDU* pdu)
+{
+    PDU* respdu = NULL;
+    //处理消息
+    switch (pdu->uiMsgType)
+    {
+    case ENUM_MSG_TYPE_REGIST_REQUEST:
+        respdu = m_pMH->regist();
+        break;
+    case ENUM_MSG_TYPE_LOGIN_REQUEST:
+        respdu = m_pMH->login(m_strLoginName);
+        break;
+    case ENUM_MSG_TYPE_FIND_USER_REQUEST:
+        respdu = m_pMH->findUser();
+        break;
+    case ENUM_MSG_TYPE_ONLINE_USER_REQUEST:
+        respdu = m_pMH->onlineUser();
+        break;
+    default:
+        break;
+    }
+    free(pdu);
+    pdu = NULL;
+    return respdu;
+}
+
+void MyTcpSocket::recvMsg()
+{
+    PDU* pdu = readMsg();
+    PDU* respdu = handleMsg(pdu);
+    sendMsg(respdu);
+}
+
+
+class MsgHandler
+{
+public:
+    PDU* pdu;
+    MsgHandler();
+    PDU* regist();
+    PDU* login(QString &strName);
+    PDU* findUser();
+    PDU* onlineUser();
+};
+
+
+PDU* MsgHandler::regist()
+{
+    char caName[32] = {'\0'};
+    char caPwd[32] = {'\0'};
+    memcpy(caName, pdu->caData, 32);
+    memcpy(caPwd, pdu->caData+32, 32);
+    bool ret = OperateDb::getInstance().handleRegist(caName, caPwd);
+    qDebug() << "regist ret" << ret;
+    PDU* respdu = mkPDU(0);
+    memcpy(respdu->caData, &ret, sizeof(bool));
+    respdu->uiMsgType = ENUM_MSG_TYPE_REGIST_RESPOND;
+    return respdu;
+}
+
+PDU* MsgHandler::login(QString &strName)
+{
+    char caName[32] = {'\0'};
+    char caPwd[32] = {'\0'};
+    memcpy(caName, pdu->caData, 32);
+    memcpy(caPwd, pdu->caData+32, 32);
+    bool ret = OperateDb::getInstance().handleLogin(caName, caPwd);
+    qDebug() << "login ret" << ret;
+    if (ret)
+    {
+        strName = caName;
+    }
+    PDU* respdu = mkPDU(0);
+    memcpy(respdu->caData, &ret, sizeof(bool));
+    respdu->uiMsgType = ENUM_MSG_TYPE_LOGIN_RESPOND;
+    return respdu;
+}
+
+客户端
+
+
+class ResHandler
+{
+public:
+    PDU* pdu;
+    ResHandler();
+    void regist();
+    void login();
+    void findUser();
+    void onlineUser();
+};
+
+void ResHandler::regist()
+{
+    bool ret;
+    memcpy(&ret, pdu->caData, sizeof(bool));
+    if (ret)
+    {
+        QMessageBox::information(&Client::getInstance(), "提示", "注册成功");
+    }
+    else
+    {
+        QMessageBox::information(&Client::getInstance(), "提示", "注册失败");
+    }
+}
+
+
+PDU* Client::readMsg()
+{
+    qDebug() << "recvMsg 接收消息长度" << socket.bytesAvailable();
+    //先读取 pdu 总长度这个成员变量
+    uint uiPDULen = 0;
+    socket.read((char*)&uiPDULen, sizeof(uint));
+    //根据总长度构建 pdu，读取结构体中剩余的成员变量
+    uint uiMsgLen = uiPDULen - sizeof(PDU);
+    PDU* pdu = mkPDU(uiMsgLen);
+    socket.read((char*)pdu+sizeof(uint), uiPDULen-sizeof(uint));
+    qDebug() << "recvMsg pdu->uiTotalLen" << pdu->uiTotalLen
+             << "pdu->uiMsgLen" << pdu->uiMsgLen
+             << "pdu->uiMsgType" << pdu->uiMsgType
+             << "pdu->caData" << pdu->caData
+             << "pdu->caData+32" << pdu->caData+32
+             << "pdu->caMsg" << pdu->caMsg;
+    //处理消息
+    switch (pdu->uiMsgType)
+    {
+    case ENUM_MSG_TYPE_REGIST_RESPOND:
+        m_pRH->regist();
+        break;
+    case ENUM_MSG_TYPE_LOGIN_RESPOND:
+        m_pRH->login();
+        break;
+    case ENUM_MSG_TYPE_FIND_USER_RESPOND:
+        m_pRH->findUser();
+        break;
+    case ENUM_MSG_TYPE_ONLINE_USER_RESPOND:
+        m_pRH->onlineUser();
+        break;
+    default:
+        break;
+    }
+    free(pdu);
+    pdu = NULL;
+}
+
+
+void MyTcpServer::resend(char *tarName, PDU *pdu)
+{
+    if (tarName == NULL || pdu == NULL)
+    {
+        return;
+    }
+    for (int i=0; i<m_tcpSocketList.size(); i++)
+    {
+        if (tarName == m_tcpSocketList[i]->m_strLoginName)
+        {
+            m_tcpSocketList[i]->write((char*)pdu, pdu->uiTotalLen);
+            qDebug() << "resend msg pdu->uiTotalLen" << pdu->uiTotalLen
+                     << "pdu->uiMsgLen" << pdu->uiMsgLen
+                     << "pdu->uiMsgType" << pdu->uiMsgType
+                     << "pdu->caData" << pdu->caData
+                     << "pdu->caData+32" << pdu->caData+32
+                     << "pdu->caMsg" << pdu->caMsg;
+        }
+    }
+}
+
+
+PDU* MsgHandler::addFriend()
+{
+    char caCurName[32] = {'\0'};
+    char caTarName[32] = {'\0'};
+    memcpy(caCurName, pdu->caData, 32);
+    memcpy(caTarName, pdu->caData+32, 32);
+    int ret = OperateDb::getInstance().handleAddFriend(caCurName, caTarName);
+    qDebug() << "addFriend ret" << ret;
+    if (ret == 1)
+    {
+        MyTcpServer::getInstance().resend(caTarName, pdu);
+        return NULL;
+    }
+    PDU* respdu = mkPDU(0);
+    memcpy(respdu->caData, &ret, sizeof(int));
+    respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_RESPOND;
+    return respdu;
+}
+
+
+void ResHandler::addFriend()
+{
+    int ret;
+    memcpy(&ret, pdu->caData, sizeof(int));
+    if (ret == -2)
+    {
+        QMessageBox::information(&Index::getInstance(), "提示", "该用户已经是好友");
+    }
+    else if (ret == 0)
+    {
+        QMessageBox::information(&Index::getInstance(), "提示", "该用户不在线");
+    }
+}
+
+void ResHandler::addFriendResend()
+{
+    char caName[32] = {'\0'};
+    memcpy(caName, pdu->caData, 32);
+    int ret = QMessageBox::question(&Index::getInstance(), "添加好友", QString("是否同意 %1 的添加好友请求?").arg(caName));
+    if (ret != QMessageBox::Yes)
+    {
+        return;
+    }
+    PDU* respdu = mkPDU(0);
+    respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_AGREE_REQUEST;
+    memcpy(respdu->caData, pdu->caData, 64);
+    Client::getInstance().sendMsg(respdu);
+}
+
+case ENUM_MSG_TYPE_ADD_FRIEND_RESPOND:
+    m_pRH->addFriend();
+    break;
+
+case ENUM_MSG_TYPE_ADD_FRIEND_REQUEST:
+    m_pRH->addFriendResend();
+    break;
+
+
+bool OperateDb::handleAddFriendAgree(char *caCurName, char *caTarName)
+{
+    if (caCurName == NULL || caTarName == NULL)
+    {
+        return false;
+    }
+    QString sql = QString("insert into friend(user_id, friend_id) "
+                          "select u1.id, u2.id "
+                          "from user_info u1, user_info u2 "
+                          "where u1.name='%1' and u2.name='%2'")
+                          .arg(caCurName).arg(caTarName);
+    QSqlQuery q;
+    return q.exec(sql);
+}
+
+
+PDU* MsgHandler::addFriendAgree()
+{
+    char caCurName[32] = {'\0'};
+    char caTarName[32] = {'\0'};
+    memcpy(caCurName, pdu->caData, 32);
+    memcpy(caTarName, pdu->caData+32, 32);
+    bool ret = OperateDb::getInstance().handleAddFriendAgree(caCurName, caTarName);
+    qDebug() << "addFriendAgree ret" << ret;
+    PDU* respdu = mkPDU(0);
+    memcpy(respdu->caData, &ret, sizeof(bool));
+    respdu->uiMsgType = ENUM_MSG_TYPE_ADD_FRIEND_AGREE_RESPOND;
+    MyTcpServer::getInstance().resend(caTarName, respdu);
+    return respdu;
+}
+
+
+void ResHandler::addFriendAgree()
+{
+    bool ret;
+    memcpy(&ret, pdu->caData, sizeof(bool));
+    if (ret)
+    {
+        QMessageBox::information(&Index::getInstance(), "提示", "添加好友成功");
+    }
+    else
+    {
+        QMessageBox::information(&Index::getInstance(), "提示", "添加好友失败");
+    }
+}
+
+刷新在线好友
+客户端给服务器发送当前登录的用户名
+用户名放入 pdu 的 caData 发送给服务器
+服务器接收并处理请求，获取所有在线好友名，发送给客户端
+数据库操作类定义一个处理在线好友的函数，参数为用户名，返回值 QStringList
+执行通过用户名获取在线好友的 sql 语句
+q.next() 循环将结果，将好友的用户名放入 QStringList 并返回
+调用数据库处理函数，得到 QStringList 在线好友名
+构建 respdu，caMsg 为好友名数量*32
+遍历在线好友名，将好友名放入 caMsg
+响应给客户端
+客户端接收在线好友名放入好友列表框中
+Friend 类定义更新好友列表框函数，参数为 QStringList，先清空再添加到列表框
+好友数量为 pdu 中的 uiMsgLen/32
+遍历 caMsg 中的好友名，将其放入 QStringList 并调用更新好友列表框函数
+刷新好友封装成函数，在 Friend 的构造函数和添加好友成功时调用
+
+
+QStringList OperateDb::handleFlushFriend(char *caName)
+{
+    QStringList res;
+    if (caName == NULL)
+    {
+        return res;
+    }
+    QString sql = QString("select name from user_info "
+                          "where id in ("
+                          "    select user_id from friend where friend_id="
+                          "    (select id from user_info where name='%1')"
+                          "    union"
+                          "    select friend_id from friend where user_id="
+                          "    (select id from user_info where name='%1')"
+                          ") and online=1").arg(caName);
+    QSqlQuery q;
+    q.exec(sql);
+    while (q.next())
+    {
+        res.append(q.value(0).toString());
+    }
+    return res;
+}
+
+
+PDU* MsgHandler::flushFriend()
+{
+    char caName[32] = {'\0'};
+    memcpy(caName, pdu->caData, 32);
+    QStringList res = OperateDb::getInstance().handleFlushFriend(caName);
+    PDU* respdu = mkPDU(res.size()*32);
+    respdu->uiMsgType = ENUM_MSG_TYPE_FLUSH_FRIEND_RESPOND;
+    for (int i=0; i<<res.size(); i++)
+    {
+        memcpy(respdu->caMsg+i*32, res[i].toStdString().c_str(), 32);
+    }
+    return respdu;
+}
+
+
+void Friend::flushFriendLW(QStringList friendList)
+{
+    ui->listWidget->clear();
+    ui->listWidget->addItems(friendList);
+}
+
+
+void ResHandler::flushFriend()
+{
+    int iSize = pdu->uiMsgLen/32;
+    QStringList nameList;
+    char caTmp[32] = {'\0'};
+    for (int i=0; i<iSize; i++)
+    {
+        memcpy(caTmp, pdu->caMsg+i*32, 32);
+        nameList.append(caTmp);
+    }
+    Index::getInstance().getFriend()->flushFriendLW(nameList);
+}
+
+
+void Friend::flushFriend()
+{
+    PDU* pdu = mkPDU(0);
+    pdu->uiMsgType = ENUM_MSG_TYPE_FLUSH_FRIEND_REQUEST;
+    memcpy(pdu->caData, Client::getInstance().m_strLoginName.toStdString().c_str(), 32);
+    Client::getInstance().sendMsg(pdu);
+}
+
+void Friend::on_flush_PB_clicked()
+{
+    flushFriend();
+}
+
+Friend::Friend(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::Friend)
+{
+    ui->setupUi(this);
+    m_pOnlineUser = new OnlineUser;
+    flushFriend();
+}
+
+void ResHandler::addFriendAgree()
+{
+    bool ret;
+    memcpy(&ret, pdu->caData, sizeof(bool));
+    if (ret)
+    {
+        Index::getInstance().getFriend()->flushFriend();
+    }
+    else
+    {
+        QMessageBox::information(&Index::getInstance(), "提示", "添加好友失败");
+    }
+}

@@ -1,0 +1,368 @@
+客户端与服务器的搭建
+配置文件
+新建资源文件：项目右键添加文件，选择 Qt Resource File，填的名称不加后缀
+添加前缀和文件：前缀是对资源文件的分类，添加文件，新建一个 config 文件（127.0.0.1:5000）
+读取配置：
+a. Client 类新增一个 loadConfig 成员函数，没有返回值和参数，在构造函数中调用
+b. loadConfig 函数中创建 QFile 对象，参数为路径（配置文件路径：:/前缀/文件名）
+c. 使用文件对象打开文件，参数为打开方式（QIODevice::ReadOnly）
+d. 如果打开失败进行打印
+e. 如果成功：文件对象调用 readAll 函数读取配置文件中的内容，返回值是 QByteArray
+f. 将得到的 QString 使用 split 函数进行分割，参数为 \n，返回值是 QStringList
+g. 使用下标访问 QStringList 中的元素，得到 ip 和端口号，并定义对应的成员变量
+h. m_strIP 和 m_usPort（quint16），端口号使用 toUShort() 转成 quint16
+i. 打印读取的 ip 和端口号
+
+
+class Client : public QWidget
+{
+    Q_OBJECT
+
+public:
+    QString m_strIP;
+    quint16 m_usPort;
+    Client(QWidget *parent = nullptr);
+    ~Client();
+    void loadConfig();
+
+private:
+    Ui::Client *ui;
+};
+
+Client::Client(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::Client)
+{
+    ui->setupUi(this);
+    loadConfig();
+}
+
+Client::~Client()
+{
+    delete ui;
+}
+
+void Client::loadConfig()
+{
+    QFile file(":/config/connect.config");  //配置文件固定冒号开头
+    if (file.open(QIODevice::ReadOnly))
+    {
+        QByteArray strData = file.readAll();
+        qDebug() << "loadConfig strData:" << strData;
+        QStringList strList = strData.split("\r\n");
+        m_strIP = strList[0];
+        m_usPort = strList[1].toUShort();
+        qDebug() << "loadConfig strIP" << m_strIP << "usPort" << m_usPort;
+        file.close();
+    }
+    else
+    {
+        qDebug() << "loadConfig 打开文件失败";
+    }
+}
+
+
+单例模式
+保证一个类只有一个实例，控制某些共享资源的访问权限。创建了一个对象后，之后再创建一个新对象，此时会获得之前已创建的对象，而不是一个新对象。
+为保证实例提供一个全局访问节点。单例模式允许在程序的任何地方访问特定对象，但是它可以保护该实例不被其他代码覆盖。
+定义获取单例对象的静态函数 getInstance
+该函数返回静态局部对象的引用，静态局部变量线程安全
+私有化构造函数、删除拷贝构造函数和拷贝赋值运算符，防止通过这些途径创建实例
+创建实例时通过 getInstance 创建
+
+
+class Client : public QWidget
+{
+    Q_OBJECT
+
+public:
+    QString m_strIP;
+    quint16 m_usPort;
+    ~Client();
+    void loadConfig();
+    static Client& getInstance();
+
+private:
+    Ui::Client *ui;
+    Client(QWidget *parent = nullptr);
+    Client(const Client& instance) = delete;
+    Client& operator=(const Client&) = delete;
+};
+
+Client& Client::getInstance()
+{
+    static Client instance;
+    return instance;
+}
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    Client::getInstance().show();
+    return a.exec();
+}
+
+
+连接服务器
+Client 定义一个 QTcpSocket 的成员变量 socket
+构造函数中调用 connectToHost，参数 1 为 QHostAddress(ip)，参数 2 为 port
+public slots 定义一个槽函数 showConnect，打印连接成功
+构造函数中调用 connect 函数，socket 发出 connected 信号关联 this 的 showConnect 槽函数
+ 
+class Client : public QWidget
+{
+    Q_OBJECT
+
+public:
+    // ...
+    QTcpSocket socket;
+
+public slots:
+    void showConnect();//？
+    // ...
+};
+
+Client::Client(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::Client)
+{
+    ui->setupUi(this);
+    loadConfig();
+    socket.connectToHost(QHostAddress(m_strIP), m_usPort);
+    connect(&socket, &QTcpSocket::connected, this, &Client::showConnect);//槽函数和信号建立连接？
+}//实现服务器连接
+
+void Client::showConnect()
+{
+    qDebug() << "连接服务器成功";
+}
+
+
+服务器
+新建 Server 项目：pro 文件包含 network 模块、加载配置文件（与客户端一样）
+监听客户端连接：
+a. 新建 MyTcpServer 类，继承 QTcpServer，设置单例模式
+b. Server 类的构造函数中使用 MyTcpServer 对象调用 listen(ip, port)//？
+处理新客户端连接，将连接客户端的 socket 存下来
+a. 新建 MyTcpSocket 类，继承 QTcpSocket
+b. 重写 MyTcpServer 中的 incomingConnection 函数，打印新客户端连接
+c. 新建一个 MyTcpSocket 的指针 pTcpSocket，incomingConnection 函数的参数赋值给 pTcpSocket 的 socketDescriptor
+d. MyTcpServer 新建 QList<MyTcpSocket*> m_tcpSocketList 成员变量，并将 pTcpSocket 存进去
+e. 循环打印 m_tcpSocketList 中的元素，验证存储 socket 是否成功
+
+
+class MyTcpServer : public QTcpServer
+{
+    Q_OBJECT
+
+public:
+    static MyTcpServer& getInstance();
+    void incomingConnection(qintptr handle) override;//？？
+
+private:
+    MyTcpServer();
+    MyTcpServer(const MyTcpServer& instance) = delete;
+    MyTcpServer& operator=(const MyTcpServer&) = delete;
+    QList<MyTcpSocket*> m_tcpSocketList;//这个成员有什么用？
+};
+
+MyTcpServer::MyTcpServer()
+{
+}
+
+MyTcpServer& MyTcpServer::getInstance()
+{
+    static MyTcpServer instance;
+    return instance;
+}//函数返回值是引用和是指针效果等价？
+
+void MyTcpServer::incomingConnection(qintptr handle)
+{
+    qDebug() << "新客户端连接";
+    MyTcpSocket *pTcpSocket = new MyTcpSocket;
+    pTcpSocket->setSocketDescriptor(handle);
+    m_tcpSocketList.append(pTcpSocket);
+
+    for (int i = 0; i < m_tcpSocketList.size(); i++)
+    {
+        qDebug() << m_tcpSocketList[i];
+    }
+}//此函数新建？
+
+Server::Server(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::Server)
+{
+    ui->setupUi(this);
+    loadConfig();
+    MyTcpServer::getInstance().listen(QHostAddress(m_strIP), m_usPort);
+}
+
+Server::~Server()
+{
+}
+
+void Server::loadConfig()
+{
+    QFile file(":/config/connect.config");  //配置文件固定冒号开头
+    if (file.open(QIODevice::ReadOnly))
+    {
+        QByteArray strData = file.readAll();
+        QStringList strList = strData.split("\r\n");
+        m_strIP = strList[0];
+        m_usPort = strList[1].toUShort();
+        qDebug() << "loadConfig strIP" << m_strIP << "usPort" << m_usPort;
+        file.close();
+    }
+    else
+    {
+        QMessageBox::critical(this, "提示", "打开文件失败");
+        qDebug() << "loadConfig 打开文件失败";
+    }
+}
+协议设计
+协议结构体：协议总长度、柔性数组长度、消息类型、参数、消息内容
+创建 protocol 头文件和源文件
+定义 PDU 结构体
+定义消息类型的枚举值
+新建构建 pdu 的函数，参数为柔性数组长度，返回值 PDU*
+根据柔性数组长度计算总长度
+根据总长度申请空间，申请后判空并赋 0
+给协议总长度和柔性数组长度赋值
+
+
+typedef unsigned int uint;
+
+enum ENUM_MSG_TYPE  //消息类型的枚举值
+{
+    ENUM_MSG_TYPE_MIN = 0,
+    ENUM_MSG_TYPE_REGIST_REQUEST,
+    ENUM_MSG_TYPE_REGIST_RESPOND,
+    ENUM_MSG_TYPE_MAX = 0x00
+};
+
+struct PDU  //协议数据单元
+{
+    uint uiPDULen;      //总长度
+    uint uiMsgLen;      //柔性数组长度（消息长度）
+    uint uiMsgType;     //类型
+    char caData[64];    //参数，数据长度小于参数长度就放到参数里
+    char caMsg[];       //消息
+};
+
+PDU* mkPDU(uint uiMsgLen);
+
+#include "protocol.h"
+#include "stdlib.h"
+#include "string.h"
+
+PDU* mkPDU(uint uiMsgLen)
+{
+    uint uiPDULen = sizeof(PDU) + uiMsgLen;
+    PDU* pdu = (PDU*)malloc(uiPDULen);
+    if (NULL == pdu)
+    {
+        exit(1);
+    }
+    memset(pdu, 0, uiPDULen);
+    pdu->uiPDULen = uiPDULen;
+    pdu->uiMsgLen = uiMsgLen;
+    return pdu;
+}
+客户端发送
+ui 界面：lineEdit、pushButton，按钮转到槽函数
+通过 ui 对象获取 lineEdit 中的文字内容 strMsg
+通过 mkPDU 函数构建 pdu，参数为 strMsg 的长度
+给类型和 caData 赋值
+socket 调用 write 函数发送 pdu
+打印 pdu 的内容并释放
+
+
+
+void Client::on_send_PB_clicked()
+{
+    QString strMsg = ui->input_LE->text();
+    qDebug() << strMsg;
+    // ui->input_LE->clear();
+    PDU* pdu = mkPDU(strMsg.toStdString().size() + 1);
+    pdu->uiMsgType = ENUM_MSG_TYPE_REGIST_REQUEST;
+    memcpy(pdu->caData, strMsg.toStdString().c_str(), strMsg.toStdString().size());
+    socket.write((char*)pdu, pdu->uiPDULen);
+    qDebug() << "send msg pdu->uiPDULen" << pdu->uiPDULen
+             << "pdu->uiMsgLen" << pdu->uiMsgLen
+             << "pdu->uiMsgType" << pdu->uiMsgType
+             << "pdu->caData" << pdu->caData
+             << "pdu->caData+32" << pdu->caData+32
+             << "pdu->caMsg" << pdu->caMsg;
+    free(pdu);
+    pdu = NULL;
+}
+
+服务器接收
+MyTcpSocket 类定义槽函数 recvMsg
+MyTcpSocket 构造函数中 connect 连接 readyRead 信号和 recvMsg 槽函数
+recvMsg 槽函数：
+a. 打印 socket 中的消息总长度
+b. read 读取协议总长度
+c. 根据总长度创建 pdu
+d. read 读取协议总长度以外的 pdu 内容：pdu 指针需要偏移到总长度这个成员变量后面，读取的总长度要减去总长度这个数据类型的长度
+
+
+class MyTcpSocket : public QTcpSocket
+{
+    Q_OBJECT
+
+public:
+    MyTcpSocket();
+public slots:
+    void recvMsg();
+};
+
+MyTcpSocket::MyTcpSocket()
+{
+    connect(this, &QTcpSocket::readyRead, this, &MyTcpSocket::recvMsg);
+}
+
+void MyTcpSocket::recvMsg()
+{
+    qDebug() << "recvMsg 接收消息长度" << this->bytesAvailable();
+    //先读取 pdu 总长度这个成员变量
+    uint uiPDULen = 0;
+    this->read((char*)&uiPDULen, sizeof(uint));
+    //根据总长度构建 pdu，读取结构体中剩余成员变量
+    uint uiMsgLen = uiPDULen - sizeof(PDU);
+    PDU* pdu = mkPDU(uiMsgLen);
+    this->read((char*)pdu + sizeof(uint), uiPDULen - sizeof(uint));
+    qDebug() << "recvMsg pdu->uiPDULen" << pdu->uiPDULen
+             << "pdu->uiMsgLen" << pdu->uiMsgLen
+             << "pdu->uiMsgType" << pdu->uiMsgType
+             << "pdu->caData" << pdu->caData
+             << "pdu->caData+32" << pdu->caData+32
+             << "pdu->caMsg" << pdu->caMsg;
+    //处理消息
+    free(pdu);
+    pdu = NULL;
+}
+客户端接收
+
+
+void Client::recvMsg()
+{
+    qDebug() << "recvMsg 接收消息长度" << socket.bytesAvailable();
+    //先读取 pdu 总长度这个成员变量
+    uint uiPDULen = 0;
+    socket.read((char*)&uiPDULen, sizeof(uint));
+    //根据总长度构建 pdu，读取结构体中剩余成员变量
+    uint uiMsgLen = uiPDULen - sizeof(PDU);
+    PDU* pdu = mkPDU(uiMsgLen);
+    socket.read((char*)pdu + sizeof(uint), uiPDULen - sizeof(uint));
+    qDebug() << "recvMsg pdu->uiPDULen" << pdu->uiPDULen
+             << "pdu->uiMsgLen" << pdu->uiMsgLen
+             << "pdu->uiMsgType" << pdu->uiMsgType
+             << "pdu->caData" << pdu->caData
+             << "pdu->caData+32" << pdu->caData+32
+             << "pdu->caMsg" << pdu->caMsg;
+    //处理消息
+    free(pdu);
+    pdu = NULL;
+}

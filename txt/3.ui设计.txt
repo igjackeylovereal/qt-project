@@ -1,0 +1,296 @@
+UI 界面
+界面设计
+创建 Qt 设计师界面类 Friend、File、Index，分别对应好友、文件、首页
+首页中添加 QStackedWidget 控件来切换界面，将 Friend 和 File 添加进去
+创建两个按钮触发切换界面，sizePolicy 垂直策略设置位 Expanding
+两个按钮转到槽，设置 stackedWidget 的显示页面
+Index 设置为单例模式
+Index 定义两个公有函数获取 Friend 和 File 界面
+
+
+void Index::on_friend_PB_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(0);
+}
+
+void Index::on_file_PB_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(1);
+}
+
+Friend *Index::getFriend()
+{
+    return ui->friendPage;
+}
+
+File *Index::getFile()
+{
+    return ui->filePage;
+}
+
+Index &Index::getInstance()
+{
+    static Index instance;
+    return instance;
+}
+界面跳转
+
+
+case ENUM_MSG_TYPE_LOGIN_RESPOND:
+{
+    bool ret;
+    memcpy(&ret, pdu->caData, sizeof(bool));
+    if (ret)
+    {
+        //展示首页，隐藏登录界面
+        Index::getInstance().show();
+        this->hide();
+    }
+    else
+    {
+        QMessageBox::information(this, "提示", "登录失败");
+    }
+    break;
+}
+
+
+用户功能
+查找用户
+客户端发送给服务器需要查找的用户名
+a. 查找用户按钮转到槽，创建带输入框的弹窗，获取到需要查找的用户名
+b. 构建 pdu，用户名放入 caData，新建查找用户的两个消息类型（协议的枚举值中）并赋值
+c. 通过 socket 发送给服务器，打印并释放
+服务器接收并查找用户的状态并响应给客户端
+a. 接收函数中新建一个 case 处理查找用户的请求类型
+b. 从 caData 取出用户名
+c. 数据库操作类中新建一个处理查找用户的函数，参数为用户名，返回值为 int 类型
+d. 构建 sql 语句并执行查询该用户是否在线以及是否在线
+e. 调用该数据库函数，得到用户状态
+f. 构建 respdu，将用户状态放到 caData，类型赋值，发送给客户端
+客户端接收并弹窗展示用户状态
+a. 接收函数中新建一个 case 处理响应
+b. 将用户状态从 caData 取出
+c. 根据状态弹窗显示
+
+
+void Friend::on_findUser_PB_clicked()
+{
+    QString strName = QInputDialog::getText(this, "查找用户", "用户名:");
+    qDebug() << "strName" << strName;
+    if (strName.isEmpty())
+    {
+        return;
+    }
+    PDU* pdu = mkPDU(0);
+    memcpy(pdu->caData, strName.toStdString().c_str(), 32);
+    pdu->uiMsgType = ENUM_MSG_TYPE_FIND_USER_REQUEST;
+    Client::getInstance().socket.write((char*)pdu, pdu->uiTotalLen);
+    qDebug() << "send msg pdu->uiTotalLen" << pdu->uiTotalLen
+             << "pdu->uiMsgLen" << pdu->uiMsgLen
+             << "pdu->uiMsgType" << pdu->uiMsgType
+             << "pdu->caData" << pdu->caData
+             << "pdu->caData+32" << pdu->caData+32
+             << "pdu->caMsg" << pdu->caMsg;
+    free(pdu);
+    pdu = NULL;
+}
+
+
+int OperateDb::handleFindUser(const char *caName)
+{
+    if (caName == NULL)
+    {
+        return -1;
+    }
+    QString sql = QString("select online from user_info where name='%1'").arg(caName);
+    qDebug() << "查询用户 online 字段 sql" << sql;
+    QSqlQuery q;
+    q.exec(sql);
+    if (q.next())
+    {
+        return q.value(0).toInt();
+    }
+    return 2;
+}
+
+
+case ENUM_MSG_TYPE_FIND_USER_REQUEST:
+{
+    char caName[32] = {'\0'};
+    memcpy(caName, pdu->caData, 32);
+    int ret = OperateDb::getInstance().handleFindUser(caName);
+    qDebug() << "find user ret" << ret;
+    PDU* respdu = mkPDU(0);
+    memcpy(respdu->caData, &ret, sizeof(int));
+    respdu->uiMsgType = ENUM_MSG_TYPE_FIND_USER_RESPOND;
+    this->write((char*)respdu, respdu->uiTotalLen);
+    qDebug() << "send msg respdu->uiTotalLen" << respdu->uiTotalLen
+             << "respdu->uiMsgLen" << respdu->uiMsgLen
+             << "respdu->uiMsgType" << respdu->uiMsgType
+             << "respdu->caData" << respdu->caData
+             << "respdu->caData+32" << respdu->caData+32
+             << "respdu->caMsg" << respdu->caMsg;
+    free(respdu);
+    respdu = NULL;
+    break;
+}
+
+
+case ENUM_MSG_TYPE_FIND_USER_RESPOND:
+{
+    int ret;
+    memcpy(&ret, pdu->caData, sizeof(int));
+    if (ret == 2)
+    {
+        QMessageBox::information(this, "提示", "该用户不存在");
+    }
+    else if (ret == 1)
+    {
+        QMessageBox::information(this, "提示", "该用户在线");
+    }
+    else if (ret == 0)
+    {
+        QMessageBox::information(this, "提示", "该用户不在线");
+    }
+    break;
+}
+
+
+在线用户
+发送消息封装成函数
+Friend 类定义 OnlineUser* 类型的成员变量，在构造函数中 new 出该对象并在析构函数中释放
+客户端发送在线用户请求并展示在线用户界面
+在线用户按钮转到槽
+如果在线用户界面现在没有展示，展示出来
+构建 pdu，协议中新增在线用户的请求和响应类型并赋值
+使用 socket 发送请求
+
+打印并释放
+服务器接收处理在线用户请求，响应给客户端所有在线的用户名
+接收消息函数新增一个处理在线用户的 case
+数据库操作类新增一个处理在线用户的函数，没有参数，返回值为 QStringList
+执行查询在线用户名的 sql 语句
+使用 q.next() 循环取出每一个在线用户名，放到一个 QStringList 里并返回
+调用数据库函数，获取所有在线用户名
+构建 respdu，在线用户名放入 caMsg，mkPDU 的参数为名字个数*32
+给 respdu 的类型赋值
+
+发送 respdu
+客户端接收并展示在线用户名
+接收消息函数新增一个处理在线用户响应的 case
+OnlineUser 类定义一个更新列表框的函数，参数为 QStringList
+清空列表框，再将用户名放入列表框
+用户名数量通过 uiMsgLen/32 得到
+遍历 caMsg 中的用户名，将用户名取出放入 QStringList
+调用更新列表框函数
+
+
+class Friend : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit Friend(QWidget *parent = nullptr);
+    ~Friend();
+    //新增
+    OnlineUser* m_pOnlineUser;
+
+private slots:
+    void on_findUser_PB_clicked();
+    void on_onlineUser_PB_clicked();
+
+private:
+    Ui::Friend *ui;
+};
+
+Friend::Friend(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::Friend)
+{
+    ui->setupUi(this);
+    m_pOnlineUser = new OnlineUser;
+}
+
+Friend::~Friend()
+{
+    delete ui;
+    delete m_pOnlineUser;
+}
+
+void Friend::on_onlineUser_PB_clicked()
+{
+    if (m_pOnlineUser->isHidden())
+    {
+        m_pOnlineUser->show();
+    }
+    PDU* pdu = mkPDU(0);
+    pdu->uiMsgType = ENUM_MSG_TYPE_ONLINE_USER_REQUEST;
+    Client::getInstance().sendMsg(pdu);
+}
+
+
+void Client::sendMsg(PDU *pdu)
+{
+    socket.write((char*)pdu, pdu->uiTotalLen);
+    qDebug() << "send msg pdu->uiTotalLen" << pdu->uiTotalLen
+             << "pdu->uiMsgLen" << pdu->uiMsgLen
+             << "pdu->uiMsgType" << pdu->uiMsgType
+             << "pdu->caData" << pdu->caData
+             << "pdu->caData+32" << pdu->caData+32
+             << "pdu->caMsg" << pdu->caMsg;
+    free(pdu);
+    pdu = NULL;
+}
+
+
+QStringList OperateDb::handleOnlineUser()
+{
+    QString sql = QString("select name from user_info where online=1");
+    QSqlQuery q;
+    q.exec(sql);
+    QStringList result;
+    result.clear();
+    while (q.next())
+    {
+        result.append(q.value(0).toString());
+    }
+    return result;
+}
+
+
+case ENUM_MSG_TYPE_ONLINE_USER_REQUEST:
+{
+    QStringList ret = OperateDb::getInstance().handleOnlineUser();
+    qDebug() << "ret.size" << ret.size();
+    PDU* respdu = mkPDU(ret.size()*32);
+    for (int i=0; i<<ret.size(); i++)
+    {
+        qDebug() << "name" << ret[i];
+        memcpy(respdu->caMsg+i*32, ret[i].toStdString().c_str(), 32);
+    }
+    respdu->uiMsgType = ENUM_MSG_TYPE_ONLINE_USER_RESPOND;
+    sendMsg(respdu);
+    break;
+}
+
+
+void OnlineUser::updateOnlineUser(QStringList nameList)
+{
+    ui->listWidget->clear();
+    ui->listWidget->addItems(nameList);
+}
+
+
+case ENUM_MSG_TYPE_ONLINE_USER_RESPOND:
+{
+    int iSize = pdu->uiMsgLen/32;
+    QStringList nameList;
+    char caTmp[32] = {'\0'};
+    for (int i=0; i<iSize; i++)
+    {
+        memcpy(caTmp, pdu->caMsg+i*32, 32);
+        nameList.append(caTmp);
+    }
+    Index::getInstance().getFriend()->m_pOnlineUser->updateOnlineUser(nameList);
+    break;
+}
