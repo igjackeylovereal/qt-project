@@ -204,6 +204,3 @@ handleMsg()           → switch(uiType) → MsgHandler::xxx()
 
 
 
-## License
-
-MIT
