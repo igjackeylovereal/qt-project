@@ -1,37 +1,258 @@
-# my__project
+<p align="center">
+  <h1 align="center">局域网即时通讯与文件分发系统</h1>
+  <p align="center">基于 C++ / Qt 5.14 的 C/S 架构即时通讯系统</p>
+</p>
 
-#### 介绍
-我的就业求职项目
+<p align="center">
+  <img src="https://img.shields.io/badge/language-C%2B%2B11-blue" alt="language">
+  <img src="https://img.shields.io/badge/Qt-5.14.2-green" alt="Qt">
+  <img src="https://img.shields.io/badge/database-MySQL-orange" alt="MySQL">
+  <img src="https://img.shields.io/badge/platform-Windows-lightgrey" alt="platform">
+  <img src="https://img.shields.io/badge/license-MIT-yellow" alt="license">
+</p>
 
-#### 软件架构
-软件架构说明
+---
 
+## 项目简介
 
-#### 安装教程
+本项目从零实现了一个类 QQ 的局域网即时通讯系统，采用 C/S 架构，包含完整的**注册登录、好友管理、私聊、在线用户列表和文件传输**功能。自定义二进制应用层协议解决 TCP 粘包/拆包问题，服务端使用线程池处理多客户端并发连接。
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+**技术栈**：C++11、Qt Network、MySQL、QThreadPool
 
-#### 使用说明
+---
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+## 效果展示
 
-#### 参与贡献
+> 截图待补充，可将运行截图放于 `screenshots/` 目录下在此展示
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+| 登录注册 | 好友列表 | 私聊 | 文件管理 |
+|----------|----------|------|----------|
+| *(待补充)* | *(待补充)* | *(待补充)* | *(待补充)* |
 
+---
 
-#### 特技
+## 系统架构
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+```
+┌─────────────────────────────┐
+│         Client 客户端         │
+│  client | index | friend     │
+│  chat | onlineuser | file    │
+│  uploader | reshandler       │
+└──────────────┬──────────────┘
+               │  TCP (自定义 PDU 协议)
+┌──────────────┴──────────────┐
+│         Server 服务端         │
+│  server | mytcpserver        │
+│  mytcpsocket | msghandler    │
+│  operatedb | clienttask      │
+└──────────────┬──────────────┘
+               │
+┌──────────────┴──────────────┐
+│           MySQL 数据库        │
+└──────────────────────────────┘
+```
+
+---
+
+## 快速开始
+
+### 环境要求
+
+- **Qt** 5.14.2（MinGW 7.3 64-bit）
+- **MySQL** 5.7+
+- **Windows** 10/11
+
+### 构建
+
+```bash
+# 服务端
+cd Server
+qmake Server.pro
+mingw32-make
+
+# 客户端
+cd Client
+qmake Client.pro
+mingw32-make
+```
+
+### 配置文件
+
+`Client/connect.config` 和 `Server/connect.config` 格式相同：
+
+```
+127.0.0.1       # 服务端 IP
+5000            # 端口号
+D:/server_root  # 文件存储根目录
+```
+
+### 运行
+
+1. 启动 MySQL，创建数据库和用户表
+2. 启动 `Server.exe`
+3. 启动 `Client.exe` → 注册 → 登录
+
+---
+
+## 功能清单
+
+- 用户注册与登录（输入校验、状态管理）
+- 查找用户（判断存在性、在线状态）
+- 在线用户列表（实时刷新、双击添加好友）
+- 好友管理（双向确认添加、删除、列表刷新）
+- 私聊（一对一实时消息）
+- 文件系统（目录浏览、新建文件夹、删除、重命名）
+- 文件上传（分片传输、异步发送、跨线程安全）
+
+---
+
+## 协议设计
+
+自定义二进制应用层协议，解决 TCP 字节流传输中的粘包与拆包问题。
+
+### PDU 结构体
+
+```cpp
+struct PDU {
+    uint uiTotalLen;    // 总长度 = sizeof(PDU) + uiMsgLen
+    uint uiMsgLen;      // 柔性数组长度
+    uint uiType;        // 消息类型（枚举值）
+    char caData[64];    // 固定 64 字节参数区
+    char caMsg[];       // 柔性数组，变长消息体
+};
+```
+
+**设计要点**：
+- `uiTotalLen` 用于接收端判断一条消息是否完整接收（粘包处理的核心）
+- `caData[64]` 用于短参数（用户名、密码），`caMsg[]` 用于长数据（聊天内容、文件路径）
+- 消息类型成对设计：`REQUEST`（客户端→服务端）与 `RESPOND`（服务端→客户端）
+
+### 消息类型
+
+| 业务 | REQUEST | RESPOND |
+|------|---------|---------|
+| 注册 | `REGIST_REQUEST` | `REGIST_RESPOND` |
+| 登录 | `LOGIN_REQUEST` | `LOGIN_RESPOND` |
+| 添加好友 | `ADD_FRIEND_REQUEST` | `ADD_FRIEND_RESPOND` |
+| 聊天 | `CHAT_REQUEST` | `CHAT_RESEND` |
+| 文件操作 | `MKDIR_REQUEST` 等 | `MKDIR_RESPOND` 等 |
+
+---
+
+## 客户端模块
+
+| 模块 | 文件 | 职责 |
+|------|------|------|
+| 接入与会话 | `client.h/.cpp` | TCP 连接、收发消息、粘包/半包处理 |
+| 响应处理 | `reshandler.h/.cpp` | 服务端回复分流到 UI 动作 |
+| 主界面编排 | `index.h/.cpp` | 好友页/文件页导航切换 |
+| 好友管理 | `friend.h/.cpp` | 查找用户、添加/删除好友 |
+| 在线用户 | `onlineuser.h/.cpp` | 在线用户列表、双击添加好友 |
+| 即时聊天 | `chat.h/.cpp` | 私聊窗口、消息收发 |
+| 文件管理 | `file.h/.cpp` | 目录浏览、文件操作、上传 |
+| 上传辅助 | `uploader.h/.cpp` | 异步分片发送 |
+
+### 消息收发流程
+
+```
+on_xxx_clicked()      → 收集输入 → 构造 PDU → 设置 uiType
+        ↓
+sendMsg(pdu)          → socket.write() → free(pdu)
+        ↓
+    [TCP 传输]
+        ↓
+recvMsg()             → readAll → buffer.append → while 循环拆包
+        ↓                         ↑
+handleMsg(pdu)        → switch(uiType) → ResHandler::xxx()
+        ↓
+ResHandler            → 取结果 → 更新 UI
+```
+
+**粘包处理核心**：`recvMsg()` 中用 `QByteArray buffer` 积累数据，通过 `uiTotalLen` 判断单条消息是否完整，不完整则 `break` 等待下次触发。
+
+---
+
+## 服务端模块
+
+| 模块 | 文件 | 职责 |
+|------|------|------|
+| 启动配置 | `server.h/.cpp` | 读配置、启动监听 |
+| 连接接入 | `mytcpserver.h/.cpp` | 接收连接、维护在线列表、消息转发 |
+| 连接会话 | `mytcpsocket.h/.cpp` | 每连接收发、拆包、业务分派 |
+| 业务处理 | `msghandler.h/.cpp` | 注册、登录、好友、聊天、文件请求处理 |
+| 数据库 | `operatedb.h/.cpp` | MySQL 增删改查 |
+| 任务调度 | `clienttask.h/.cpp` | QRunnable + QThreadPool 并发 |
+
+### 请求处理流程
+
+```
+incomingConnection()  → new MyTcpSocket → 加入在线列表 → 丢进线程池
+        ↓
+recvMsg()             → readAll → buffer → while 拆包
+        ↓
+handleMsg()           → switch(uiType) → MsgHandler::xxx()
+        ↓
+业务处理              → 查 MySQL / 操作文件系统
+        ↓
+构造 RESPOND PDU      → sendMsg 回复 / resend 转发
+```
+
+---
+
+## 目录结构
+
+```
+├── Client/                     # 客户端工程
+│   ├── main.cpp                # 入口
+│   ├── client.h / client.cpp   # 接入与会话
+│   ├── reshandler.h / .cpp     # 响应处理
+│   ├── index.h / index.cpp     # 主界面编排
+│   ├── friend.h / friend.cpp   # 好友管理
+│   ├── onlineuser.h / .cpp     # 在线用户
+│   ├── chat.h / chat.cpp       # 即时聊天
+│   ├── file.h / file.cpp       # 文件管理
+│   ├── uploader.h / .cpp       # 上传辅助
+│   ├── protocol.h / .cpp       # 协议定义
+│   ├── *.ui                    # 界面文件
+│   └── connect.config          # 客户端配置
+│
+├── Server/                     # 服务端工程
+│   ├── main.cpp                # 入口
+│   ├── server.h / server.cpp   # 启动与配置
+│   ├── mytcpserver.h / .cpp    # 连接接入
+│   ├── mytcpsocket.h / .cpp    # 连接会话
+│   ├── msghandler.h / .cpp     # 业务处理
+│   ├── operatedb.h / .cpp      # 数据库操作
+│   ├── clienttask.h / .cpp     # 任务调度
+│   ├── protocol.h / .cpp       # 协议定义
+│   └── connect.config          # 服务端配置
+│
+├── txt/                        # 学习笔记与设计文档
+│   ├── 1客户端服务端搭建 以及接收.txt
+│   ├── 2.登录和注册.txt
+│   ├── 3.ui设计.txt
+│   ├── 4.函数封装和好友功能.txt
+│   ├── 5.删除好友 聊天功能 文件系统.txt
+│   ├── 6.文件传输以及优化.txt
+│   ├── 概念集合                  # M0-M4 阶段技术概念汇总
+│   └── process.txt             # 模块拆解文档
+│
+└── README.md
+```
+
+---
+
+## 待改进
+
+- [ ] 离线消息缓存（当前用户不在线时消息丢弃）
+- [ ] 群聊功能
+- [ ] 文件断点续传
+- [ ] 用户头像支持
+- [ ] 跨平台编译（Linux / macOS）
+
+---
+
+## License
+
+MIT

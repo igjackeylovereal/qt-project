@@ -7,236 +7,219 @@
 #include <QDebug>
 #include <QDir>
 
-MsgHandler::MsgHandler()
-{
-
+MsgHandler::MsgHandler() {
 }
 
-PDU *MsgHandler::regist()
-{
-    char caName[32] = {'\0'};
-    memcpy(caName, pdu->caData, 32);
-    char caPwd[32] = {'\0'};
-    memcpy(caPwd, pdu->caData+32, 32);
-    qDebug() << "regist caName" << caName << "caPwd" << caPwd;
-    bool ret = OperateDB::getInstance().handleRegist(caName, caPwd);
-    qDebug() << "regist ret" << ret;
-    if (ret) {
-        QDir dir;
-        bool res = dir.mkdir(QString("%1/%2").arg(Server::getInstance().m_strRootPath).arg(caName));
-        qDebug() << "创建用户文件夹 res" << res;
-    }
-    PDU* respdu = mkPDU();
-    memcpy(respdu->caData, &ret, sizeof(bool));
-    respdu->uiType = ENUM_TYPE_REGIST_RESPOND;
-    return respdu;
-}
-
-PDU *MsgHandler::login(QString &strLoginName)
-{
-    char caName[32] = {'\0'};
-    memcpy(caName, pdu->caData, 32);
-    char caPwd[32] = {'\0'};
-    memcpy(caPwd, pdu->caData+32, 32);
-    qDebug() << "login caName" << caName << "caPwd" << caPwd;
-    bool ret = OperateDB::getInstance().handleLogin(caName, caPwd);
-    qDebug() << "login ret" << ret;
-    if (ret) {
-        strLoginName = caName;
-    }
-    PDU* respdu = mkPDU();
-    memcpy(respdu->caData, &ret, sizeof(bool));
-    respdu->uiType = ENUM_TYPE_LOGIN_RESPOND;
-    return respdu;
-}
-
-PDU *MsgHandler::findUser()
-{
-    char caName[32] = {'\0'};
-    memcpy(caName, pdu->caData, 32);
-    qDebug() << "find user caName" << caName;
-    int ret = OperateDB::getInstance().handleFindUser(caName);
-    qDebug() << "find user ret" << ret;
-    PDU* respdu = mkPDU();
-    memcpy(respdu->caData, &ret, sizeof(int));
-    respdu->uiType = ENUM_TYPE_FIND_USER_RESPOND;
-    return respdu;
-}
-
-PDU *MsgHandler::onlineUser()
-{
-    QStringList res = OperateDB::getInstance().handleOnlineUser();
-    PDU* respdu = mkPDU(res.size()*32);
-    respdu->uiType = ENUM_TYPE_ONLINE_USER_RESPOND;
-    for (int i=0; i<res.size(); i++) {
-        memcpy(respdu->caMsg+i*32, res[i].toStdString().c_str(), 32);
-    }
-    return respdu;
-}
-
-PDU *MsgHandler::addFriend()
-{
-    char caCurName[32] = {'\0'};
-    char caTarName[32] = {'\0'};
-    memcpy(caCurName, pdu->caData, 32);
-    memcpy(caTarName, pdu->caData+32, 32);
-    int ret = OperateDB::getInstance().handleAddFriend(caCurName, caTarName);
-    qDebug() << "addFriend ret" << ret;
-    if (ret == 1) {
-        pdu->uiType = ENUM_TYPE_ADD_FRIEND_RESEND;
-        MyTcpServer::getInstance().resend(caTarName, pdu);
-        return NULL;
-    }
-    PDU* respdu = mkPDU();
-    respdu->uiType = ENUM_TYPE_ADD_FRIEND_RESPOND;
-    memcpy(respdu->caData, &ret, sizeof (int));
-    return respdu;
-}
-
-PDU *MsgHandler::addFriendAgree()
-{
-    char caCurName[32] = {'\0'};
-    char caTarName[32] = {'\0'};
-    memcpy(caCurName, pdu->caData, 32);
-    memcpy(caTarName, pdu->caData+32, 32);
-    bool ret = OperateDB::getInstance().handleAddFriendAgree(caCurName, caTarName);
-    qDebug() << "addFriendAgree ret" << ret;
-    PDU* respdu = mkPDU();
-    respdu->uiType = ENUM_TYPE_ADD_FRIEND_AGREE_RESPOND;
-    memcpy(respdu->caData, &ret, sizeof (int));
-    MyTcpServer::getInstance().resend(caCurName, respdu);
-    return respdu;
-}
-
-PDU *MsgHandler::flushFriend()
-{
-    QStringList res = OperateDB::getInstance().handleFlushFriend(pdu->caData);
-    PDU* respdu = mkPDU(res.size()*32);
-    respdu->uiType = ENUM_TYPE_FLUSH_FRIEND_RESPOND;
-    for (int i=0; i<res.size(); i++) {
-        memcpy(respdu->caMsg+i*32, res[i].toStdString().c_str(), 32);
-    }
-    return respdu;
-}
-
-PDU *MsgHandler::delFriend()
-{
-    char curName[32] = {'\0'};
-    char tarName[32] = {'\0'};
-    memcpy(curName, pdu->caData, 32);
-    memcpy(tarName, pdu->caData+32, 32);
-    bool ret = OperateDB::getInstance().handleDelFriend(curName, tarName);
-    qDebug() << "delFriend ret: " << ret;
-    PDU* respdu = mkPDU();
-    respdu->uiType = ENUM_TYPE_DEL_FRIEND_RESPOND;
-    memcpy(respdu->caData, &ret, sizeof(bool));
-    return respdu;
-}
-
-PDU *MsgHandler::chat()
-{
-    char tarName[32] = {'\0'};
-    memcpy(tarName, pdu->caData+32, 32);
-    pdu->uiType = ENUM_TYPE_CHAT_RESEND;
-    MyTcpServer::getInstance().resend(tarName, pdu);
-    return NULL;
-}
-
-PDU *MsgHandler::mkdir()
-{
-    QString strPath = QString("%1/%2").arg(pdu->caMsg).arg(pdu->caData);
-    qDebug() << "mkdir strPath" << strPath;
+Pdu *MsgHandler::Regist() {
+  char ca_name[32] = {'\0'};
+  memcpy(ca_name, pdu_->data, 32);
+  char ca_pwd[32] = {'\0'};
+  memcpy(ca_pwd, pdu_->data+32, 32);
+  qDebug() << "regist caName" << ca_name << "caPwd" << ca_pwd;
+  bool ret = OperateDB::GetInstance().handleRegist(ca_name, ca_pwd);
+  qDebug() << "regist ret" << ret;
+  if (ret) {
     QDir dir;
-    bool ret = dir.mkdir(strPath);
-    qDebug() << "mkdir ret: " << ret;
-    PDU* respdu = mkPDU();
-    respdu->uiType = ENUM_TYPE_MKDIR_RESPOND;
-    memcpy(respdu->caData, &ret, sizeof(bool));
-    return respdu;
+    bool res = dir.mkdir(QString("%1/%2").arg(Server::GetInstance().str_root_path_).arg(ca_name));
+    qDebug() << "创建用户文件夹 res" << res;
+  }
+  Pdu* respdu = MakePdu();
+  memcpy(respdu->data, &ret, sizeof(bool));
+  respdu->type = kRegistRespond;
+  return respdu;
 }
 
-PDU *MsgHandler::flushFile()
-{
-    QDir dir(pdu->caMsg);
-    QFileInfoList fileInfoList = dir.entryInfoList();
+Pdu *MsgHandler::Login(QString &str_login_name) {
+  char ca_name[32] = {'\0'};
+  memcpy(ca_name, pdu_->data, 32);
+  char ca_pwd[32] = {'\0'};
+  memcpy(ca_pwd, pdu_->data+32, 32);
+  qDebug() << "login caName" << ca_name << "caPwd" << ca_pwd;
+  bool ret = OperateDB::GetInstance().handleLogin(ca_name, ca_pwd);
+  qDebug() << "login ret" << ret;
+  if (ret) {
+    str_login_name = ca_name;
+  }
+  Pdu* respdu = MakePdu();
+  memcpy(respdu->data, &ret, sizeof(bool));
+  respdu->type = kLoginRespond;
+  return respdu;
+}
 
-    PDU* respdu = mkPDU((fileInfoList.size()-2) * sizeof(FileInfo));
-    respdu->uiType = ENUM_TYPE_FLUSH_FILE_RESPOND;
-    for (int i=0, j=0; i<fileInfoList.size(); i++) {
-        if (fileInfoList[i].fileName() == "." || fileInfoList[i].fileName() == "..") {
-            continue;
-        }
-        FileInfo* pFileInfo = (FileInfo*)respdu->caMsg+j++;
-        if (fileInfoList[i].isDir()) {
-            pFileInfo->iFileType = 0;
-        } else {
-            pFileInfo->iFileType = 1;
-        }
-        memcpy(pFileInfo->caName, fileInfoList[i].fileName().toStdString().c_str(), 32);
-        qDebug() << "pFileInfo->caName" << pFileInfo->caName;
+Pdu *MsgHandler::FindUser() {
+  char ca_name[32] = {'\0'};
+  memcpy(ca_name, pdu_->data, 32);
+  qDebug() << "find user caName" << ca_name;
+  int ret = OperateDB::GetInstance().handleFindUser(ca_name);
+  qDebug() << "find user ret" << ret;
+  Pdu* respdu = MakePdu();
+  memcpy(respdu->data, &ret, sizeof(int));
+  respdu->type = kFindUserRespond;
+  return respdu;
+}
+
+Pdu *MsgHandler::OnlineUser() {
+  QStringList res = OperateDB::GetInstance().handleOnlineUser();
+  Pdu* respdu = MakePdu(res.size()*32);
+  respdu->type = kOnlineUserRespond;
+  for (int i=0; i<res.size(); i++) {
+    memcpy(respdu->msg+i*32, res[i].toStdString().c_str(), 32);
+  }
+  return respdu;
+}
+
+Pdu *MsgHandler::AddFriend() {
+  char ca_cur_name[32] = {'\0'};
+  char ca_tar_name[32] = {'\0'};
+  memcpy(ca_cur_name, pdu_->data, 32);
+  memcpy(ca_tar_name, pdu_->data+32, 32);
+  int ret = OperateDB::GetInstance().handleAddFriend(ca_cur_name, ca_tar_name);
+  qDebug() << "addFriend ret" << ret;
+  if (ret == 1) {
+    pdu_->type = kAddFriendResend;
+    MyTcpServer::GetInstance().Resend(ca_tar_name, pdu_);
+    return nullptr;
+  }
+  Pdu* respdu = MakePdu();
+  respdu->type = kAddFriendRespond;
+  memcpy(respdu->data, &ret, sizeof (int));
+  return respdu;
+}
+
+Pdu *MsgHandler::AddFriendAgree() {
+  char ca_cur_name[32] = {'\0'};
+  char ca_tar_name[32] = {'\0'};
+  memcpy(ca_cur_name, pdu_->data, 32);
+  memcpy(ca_tar_name, pdu_->data+32, 32);
+  bool ret = OperateDB::GetInstance().handleAddFriendAgree(ca_cur_name, ca_tar_name);
+  qDebug() << "addFriendAgree ret" << ret;
+  Pdu* respdu = MakePdu();
+  respdu->type = kAddFriendAgreeRespond;
+  memcpy(respdu->data, &ret, sizeof (int));
+  MyTcpServer::GetInstance().Resend(ca_cur_name, respdu);
+  return respdu;
+}
+
+Pdu *MsgHandler::FlushFriend() {
+  QStringList res = OperateDB::GetInstance().handleFlushFriend(pdu_->data);
+  Pdu* respdu = MakePdu(res.size()*32);
+  respdu->type = kFlushFriendRespond;
+  for (int i=0; i<res.size(); i++) {
+    memcpy(respdu->msg+i*32, res[i].toStdString().c_str(), 32);
+  }
+  return respdu;
+}
+
+Pdu *MsgHandler::DelFriend() {
+  char cur_name[32] = {'\0'};
+  char tar_name[32] = {'\0'};
+  memcpy(cur_name, pdu_->data, 32);
+  memcpy(tar_name, pdu_->data+32, 32);
+  bool ret = OperateDB::GetInstance().handleDelFriend(cur_name, tar_name);
+  qDebug() << "delFriend ret: " << ret;
+  Pdu* respdu = MakePdu();
+  respdu->type = kDelFriendRespond;
+  memcpy(respdu->data, &ret, sizeof(bool));
+  return respdu;
+}
+
+Pdu *MsgHandler::Chat() {
+  char tar_name[32] = {'\0'};
+  memcpy(tar_name, pdu_->data+32, 32);
+  pdu_->type = kChatResend;
+  MyTcpServer::GetInstance().Resend(tar_name, pdu_);
+  return nullptr;
+}
+
+Pdu *MsgHandler::Mkdir() {
+  QString str_path = QString("%1/%2").arg(pdu_->msg).arg(pdu_->data);
+  qDebug() << "mkdir strPath" << str_path;
+  QDir dir;
+  bool ret = dir.mkdir(str_path);
+  qDebug() << "mkdir ret: " << ret;
+  Pdu* respdu = MakePdu();
+  respdu->type = kMkdirRespond;
+  memcpy(respdu->data, &ret, sizeof(bool));
+  return respdu;
+}
+
+Pdu *MsgHandler::FlushFile() {
+  QDir dir(pdu_->msg);
+  QFileInfoList file_info_list = dir.entryInfoList();
+
+  Pdu* respdu = MakePdu((file_info_list.size()-2) * sizeof(FileInfo));
+  respdu->type = kFlushFileRespond;
+  for (int i=0, j=0; i<file_info_list.size(); i++) {
+    if (file_info_list[i].fileName() == "." || file_info_list[i].fileName() == "..") {
+      continue;
     }
-    return respdu;
-}
-
-PDU *MsgHandler::delFile()
-{
-    QFileInfo fileInfo(pdu->caMsg);
-    int ret;
-    if (fileInfo.isDir()) {
-        QDir dir(pdu->caMsg);
-        ret = dir.removeRecursively();
+    FileInfo* file_info = reinterpret_cast<FileInfo*>(respdu->msg) + j++;
+    if (file_info_list[i].isDir()) {
+      file_info->file_type = 0;
     } else {
-        QFile file;
-        ret = file.remove(pdu->caMsg);
+      file_info->file_type = 1;
     }
-    qDebug() << "delFile ret" << ret;
-    PDU* respdu = mkPDU();
-    respdu->uiType = ENUM_TYPE_DEL_FILE_RESPOND;
-    memcpy(respdu->caData, &ret, sizeof(bool));
-    return respdu;
+    memcpy(file_info->name, file_info_list[i].fileName().toStdString().c_str(), 32);
+    qDebug() << "pFileInfo->name" << file_info->name;
+  }
+  return respdu;
 }
 
-PDU *MsgHandler::renameFile()
-{
-    char caOldName[32] = {'\0'};
-    char caNewName[32] = {'\0'};
-    memcpy(caOldName, pdu->caData, 32);
-    memcpy(caNewName, pdu->caData+32, 32);
-    QString strOldPath = QString("%1/%2").arg(pdu->caMsg).arg(caOldName);
-    QString strNewPath = QString("%1/%2").arg(pdu->caMsg).arg(caNewName);
-    QDir dir;
-    bool ret = dir.rename(strOldPath, strNewPath);
-    PDU* respdu = mkPDU();
-    respdu->uiType = ENUM_TYPE_RENAME_FILE_RESPOND;
-    memcpy(respdu->caData, &ret, sizeof(bool));
-    return respdu;
+Pdu *MsgHandler::DelFile() {
+  QFileInfo file_info(pdu_->msg);
+  int ret;
+  if (file_info.isDir()) {
+    QDir dir(pdu_->msg);
+    ret = dir.removeRecursively();
+  } else {
+    QFile file;
+    ret = file.remove(pdu_->msg);
+  }
+  qDebug() << "delFile ret" << ret;
+  Pdu* respdu = MakePdu();
+  respdu->type = kDelFileRespond;
+  memcpy(respdu->data, &ret, sizeof(bool));
+  return respdu;
 }
 
-PDU *MsgHandler::uploadFileInit()
-{
-    char caFileName[32] = {'\0'};
-    memcpy(caFileName, pdu->caData, 32);
-    m_iUploadFileSize = 0;
-    memcpy(&m_iUploadFileSize, pdu->caData+32, sizeof(qint64));
-    QString strPath = QString("%1/%2").arg(pdu->caMsg).arg(caFileName);
-    m_fUploadFile.setFileName(strPath);
-    m_iUploadFileReceived = 0;
-    bool ret = m_fUploadFile.open(QIODevice::WriteOnly);
-    PDU* respdu = mkPDU();
-    respdu->uiType = ENUM_TYPE_UPLOAD_FILE_INIT_RESPOND;
-    memcpy(respdu->caData, &ret, sizeof(bool));
-    return respdu;
+Pdu *MsgHandler::RenameFile() {
+  char ca_old_name[32] = {'\0'};
+  char ca_new_name[32] = {'\0'};
+  memcpy(ca_old_name, pdu_->data, 32);
+  memcpy(ca_new_name, pdu_->data+32, 32);
+  QString str_old_path = QString("%1/%2").arg(pdu_->msg).arg(ca_old_name);
+  QString str_new_path = QString("%1/%2").arg(pdu_->msg).arg(ca_new_name);
+  QDir dir;
+  bool ret = dir.rename(str_old_path, str_new_path);
+  Pdu* respdu = MakePdu();
+  respdu->type = kRenameFileRespond;
+  memcpy(respdu->data, &ret, sizeof(bool));
+  return respdu;
 }
 
-PDU *MsgHandler::uploadFileData()
-{
-    m_fUploadFile.write(pdu->caMsg, pdu->uiMsgLen);
-    m_iUploadFileReceived += pdu->uiMsgLen;
-    if (m_iUploadFileReceived < m_iUploadFileSize) {
-        return NULL;
-    }
-    m_fUploadFile.close();
-    PDU* respdu = mkPDU();
-    respdu->uiType = ENUM_TYPE_UPLOAD_FILE_DATA_RESPOND;
-    return respdu;
+Pdu *MsgHandler::UploadFileInit() {
+  char ca_file_name[32] = {'\0'};
+  memcpy(ca_file_name, pdu_->data, 32);
+  upload_file_size_ = 0;
+  memcpy(&upload_file_size_, pdu_->data+32, sizeof(qint64));
+  QString str_path = QString("%1/%2").arg(pdu_->msg).arg(ca_file_name);
+  upload_file_.setFileName(str_path);
+  upload_file_received_ = 0;
+  bool ret = upload_file_.open(QIODevice::WriteOnly);
+  Pdu* respdu = MakePdu();
+  respdu->type = kUploadFileInitRespond;
+  memcpy(respdu->data, &ret, sizeof(bool));
+  return respdu;
+}
+
+Pdu *MsgHandler::UploadFileData() {
+  upload_file_.write(pdu_->msg, pdu_->msg_len);
+  upload_file_received_ += pdu_->msg_len;
+  if (upload_file_received_ < upload_file_size_) {
+    return nullptr;
+  }
+  upload_file_.close();
+  Pdu* respdu = MakePdu();
+  respdu->type = kUploadFileDataRespond;
+  return respdu;
 }

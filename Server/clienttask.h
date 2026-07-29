@@ -6,13 +6,12 @@
 #include <QObject>
 #include <QRunnable>
 
-class ClientTask : public QObject, public QRunnable
-{
-    Q_OBJECT
+class ClientTask : public QObject, public QRunnable {
+  Q_OBJECT
 public:
-    ClientTask(MyTcpSocket* socket);
-    void run() override;
-    MyTcpSocket* m_socket;
+  ClientTask(MyTcpSocket* socket);
+  void run() override;
+  MyTcpSocket* socket_;
 
 signals:
 

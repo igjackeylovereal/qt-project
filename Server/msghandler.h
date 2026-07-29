@@ -7,30 +7,28 @@
 #include <QString>
 
 
-
-class MsgHandler
-{
-public:
-    PDU* pdu;
-    qint64 m_iUploadFileSize;
-    qint64 m_iUploadFileReceived;
-    QFile m_fUploadFile;
-    MsgHandler();
-    PDU* regist();
-    PDU* login(QString& strLoginName);
-    PDU* findUser();
-    PDU* onlineUser();
-    PDU* addFriend();
-    PDU* addFriendAgree();
-    PDU* flushFriend();
-    PDU* delFriend();
-    PDU* chat();
-    PDU* mkdir();
-    PDU* flushFile();
-    PDU* delFile();
-    PDU* renameFile();
-    PDU* uploadFileInit();
-    PDU* uploadFileData();
+class MsgHandler {
+ public:
+  Pdu* pdu_;
+  qint64 upload_file_size_;
+  qint64 upload_file_received_;
+  QFile upload_file_;
+  MsgHandler();
+  Pdu* Regist();
+  Pdu* Login(QString& str_login_name);
+  Pdu* FindUser();
+  Pdu* OnlineUser();
+  Pdu* AddFriend();
+  Pdu* AddFriendAgree();
+  Pdu* FlushFriend();
+  Pdu* DelFriend();
+  Pdu* Chat();
+  Pdu* Mkdir();
+  Pdu* FlushFile();
+  Pdu* DelFile();
+  Pdu* RenameFile();
+  Pdu* UploadFileInit();
+  Pdu* UploadFileData();
 };
 
 #endif // MSGHANDLER_H

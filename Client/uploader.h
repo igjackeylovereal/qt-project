@@ -1,24 +1,25 @@
-#ifndef UPLOADER_H
-#define UPLOADER_H
+#ifndef UPLOADER_H_
+#define UPLOADER_H_
 
 #include "protocol.h"
 
 #include <QObject>
 
-class Uploader : public QObject
-{
-    Q_OBJECT
-public:
-    Uploader(const QString strFilePath);
-    QString m_strUploadFilePath;
-    void start();
-public slots:
-    void uploadFile();
+class Uploader : public QObject {
+  Q_OBJECT
 
-signals:
-    void errorMsg(const QString& msg);
-    void uploadPDU(PDU* pdu);
-    void finished();
+ public:
+  Uploader(const QString str_file_path);
+  QString str_upload_file_path_;
+  void Start();
+
+ public slots:
+  void UploadFile();
+
+ signals:
+  void ErrorMsg(const QString& msg);
+  void UploadPdu(Pdu* pdu);
+  void Finished();
 };
 
-#endif // UPLOADER_H
+#endif  // UPLOADER_H_

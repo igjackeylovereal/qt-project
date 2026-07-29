@@ -3,9 +3,8 @@
 
 #include <QApplication>
 
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
-    Client::getInstance().show();
-    return a.exec();
+int main(int argc, char* argv[]) {
+  QApplication a(argc, argv);
+  Client::GetInstance().show();
+  return a.exec();
 }

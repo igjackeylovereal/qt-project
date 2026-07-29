@@ -3,18 +3,18 @@
 
 #include <QWidget>
 
-class Server : public QWidget
-{
-    Q_OBJECT
+class Server : public QWidget {
+  Q_OBJECT
 
 public:
-    QString m_strIP;
-    quint16 m_usPort;
-    QString m_strRootPath;
-    static Server& getInstance();
-    ~Server();
-    void loadConfig();
+  QString str_ip_;
+  quint16 us_port_;
+  QString str_root_path_;
+  static Server& GetInstance();
+  ~Server();
+  void LoadConfig();
+
 private:
-    Server(QWidget *parent = nullptr);
+  Server(QWidget* parent = nullptr);
 };
 #endif // SERVER_H

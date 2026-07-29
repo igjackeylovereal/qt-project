@@ -3,111 +3,103 @@
 #include <QSqlError>
 #include <QSqlQuery>
 
-OperateDB &OperateDB::getInstance()
-{
-    static OperateDB instance;
-    return instance;
+OperateDB &OperateDB::GetInstance() {
+  static OperateDB instance;
+  return instance;
 }
 
-void OperateDB::connectSQL()
-{
-    m_db.setHostName("localhost");
-    m_db.setPort(3306);
-    m_db.setUserName("root");
-    m_db.setPassword("7766");
-    m_db.setDatabaseName("mydb");
-    if (m_db.open()) {
-        qDebug() << "数据库连接成功";
-    } else {
-        qDebug() << "数据库连接失败" << m_db.lastError().text();
-    }
+void OperateDB::connectSQL() {
+  db_.setDatabaseName("DRIVER={MariaDB ODBC 3.2 Driver};"
+                      "SERVER=localhost;"
+                      "PORT=3306;"
+                      "DATABASE=mydb;"
+                      "USER=root;"
+                      "PASSWORD=7766;");
+  if (db_.open()) {
+    qDebug() << "数据库连接成功";
+  } else {
+    qDebug() << "数据库连接失败" << db_.lastError().text();
+  }
 }
 
-OperateDB::~OperateDB()
-{
-    m_db.close();
+OperateDB::~OperateDB() {
+  db_.close();
 }
 
-bool OperateDB::handleRegist(const char *caName, const char *caPwd)
-{
-    if (caName == NULL || caPwd == NULL) {
-        return false;
-    }
-    QString sql = QString("select * from user_info where name='%1'").arg(caName);
-    qDebug() << "查找用户是否存在 sql" << sql;
-    QSqlQuery q;
-    if (!q.exec(sql) || q.next()) {
-        return false;
-    }
-    sql = QString("insert into user_info(name, pwd) values('%1', '%2')").arg(caName).arg(caPwd);
-    qDebug() << "插入一条用户记录 sql" << sql;
-    return q.exec(sql);
+bool OperateDB::handleRegist(const char *caName, const char *caPwd) {
+  if (caName == nullptr || caPwd == nullptr) {
+    return false;
+  }
+  QString sql = QString("select * from user_info where name='%1'").arg(caName);
+  qDebug() << "查找用户是否存在 sql" << sql;
+  QSqlQuery q;
+  if (!q.exec(sql) || q.next()) {
+    return false;
+  }
+  sql = QString("insert into user_info(name, pwd) values('%1', '%2')").arg(caName).arg(caPwd);
+  qDebug() << "插入一条用户记录 sql" << sql;
+  return q.exec(sql);
 }
 
-bool OperateDB::handleLogin(const char *caName, const char *caPwd)
-{
+bool OperateDB::handleLogin(const char *caName, const char *caPwd) {
 
-    if (caName == NULL || caPwd == NULL) {
-        return false;
-    }
-    QString sql = QString("select * from user_info where name='%1' and pwd='%2'").arg(caName).arg(caPwd);
-    qDebug() << "查找用户名和密码是否存在 sql" << sql;
-    QSqlQuery q;
-    if (!q.exec(sql) || !q.next()) {
-        return false;
-    }
-    sql = QString("update user_info set online=1 where name='%1'").arg(caName);
-    qDebug() << "将用户的online字段置为1 sql" << sql;
-    return q.exec(sql);
+  if (caName == nullptr || caPwd == nullptr) {
+    return false;
+  }
+  QString sql = QString("select * from user_info where name='%1' and pwd='%2'").arg(caName).arg(caPwd);
+  qDebug() << "查找用户名和密码是否存在 sql" << sql;
+  QSqlQuery q;
+  if (!q.exec(sql) || !q.next()) {
+    return false;
+  }
+  sql = QString("update user_info set online=1 where name='%1'").arg(caName);
+  qDebug() << "将用户的online字段置为1 sql" << sql;
+  return q.exec(sql);
 }
 
-void OperateDB::handleOffline(const char *caName)
-{
-    if (caName == NULL) {
-        return;
-    }
-    QString sql = QString("update user_info set online=0 where name='%1'").arg(caName);
-    qDebug() << "将用户的online字段置为0 sql" << sql;
-    QSqlQuery q;
-    bool ret = q.exec(sql);
-    qDebug() << "handleOffline ret" << ret;
+void OperateDB::handleOffline(const char *caName) {
+  if (caName == nullptr) {
+    return;
+  }
+  QString sql = QString("update user_info set online=0 where name='%1'").arg(caName);
+  qDebug() << "将用户的online字段置为0 sql" << sql;
+  QSqlQuery q;
+  bool ret = q.exec(sql);
+  qDebug() << "handleOffline ret" << ret;
 }
 
-int OperateDB::handleFindUser(const char *caName)
-{
-    if (caName == NULL) {
-        return -1;
-    }
-    QString sql = QString("select online from user_info where name='%1'").arg(caName);
-    qDebug() << "查找用户的online字段 sql" << sql;
-    QSqlQuery q;
-    if (!q.exec(sql)) {
-        return -1;
-    }
-    if (q.next()) {
-        return q.value(0).toInt();
-    }
-    return 2;
+int OperateDB::handleFindUser(const char *caName) {
+  if (caName == nullptr) {
+    return -1;
+  }
+  QString sql = QString("select online from user_info where name='%1'").arg(caName);
+  qDebug() << "查找用户的online字段 sql" << sql;
+  QSqlQuery q;
+  if (!q.exec(sql)) {
+    return -1;
+  }
+  if (q.next()) {
+    return q.value(0).toInt();
+  }
+  return 2;
 }
 
-QStringList OperateDB::handleOnlineUser()
-{
-    QString sql = QString("select name from user_info where online=1");
-    QSqlQuery q;
-    q.exec(sql);
-    QStringList res;
-    while (q.next()) {
-        res.append(q.value(0).toString());
-    }
-    return res;
+QStringList OperateDB::handleOnlineUser() {
+  QString sql = QString("select name from user_info where online=1");
+  QSqlQuery q;
+  q.exec(sql);
+  QStringList res;
+  while (q.next()) {
+    res.append(q.value(0).toString());
+  }
+  return res;
 }
 
-int OperateDB::handleAddFriend(const char *caCurName, const char *caTarName)
-{
-    if (caCurName == NULL || caTarName == NULL) {
-        return -1;
-    }
-    QString sql = QString(R"(
+int OperateDB::handleAddFriend(const char *caCurName, const char *caTarName) {
+  if (caCurName == nullptr || caTarName == nullptr) {
+    return -1;
+  }
+  QString sql = QString(R"(
                           select * from friend where
                           (
                             user_id=(select id from user_info where name='%1')
@@ -121,43 +113,41 @@ int OperateDB::handleAddFriend(const char *caCurName, const char *caTarName)
                             friend_id==(select id from user_info where name='%1')
                           )
                           )").arg(caCurName).arg(caTarName);
-    qDebug() << "判断是否是好友 sql" << sql;
-    QSqlQuery q;
-    q.exec(sql);
-    if (q.next()) {
-        return -2;
-    }
-    sql = QString("select online from user_info where name='%1'").arg(caTarName);
-    qDebug() << "查询用户是否在线 sql" << sql;
-    q.exec(sql);
-    if (q.next()) {
-        return q.value(0).toInt();
-    }
-    return -1;
+  qDebug() << "判断是否是好友 sql" << sql;
+  QSqlQuery q;
+  q.exec(sql);
+  if (q.next()) {
+    return -2;
+  }
+  sql = QString("select online from user_info where name='%1'").arg(caTarName);
+  qDebug() << "查询用户是否在线 sql" << sql;
+  q.exec(sql);
+  if (q.next()) {
+    return q.value(0).toInt();
+  }
+  return -1;
 }
 
-bool OperateDB::handleAddFriendAgree(const char *caCurName, const char *caTarName)
-{
-    if (caCurName == NULL || caTarName == NULL) {
-        return false;
-    }
-    QString sql = QString(R"(
+bool OperateDB::handleAddFriendAgree(const char *caCurName, const char *caTarName) {
+  if (caCurName == nullptr || caTarName == nullptr) {
+    return false;
+  }
+  QString sql = QString(R"(
                           insert into friend(user_id, friend_id)
                           select u1.id, u2.id
                           from user_info u1, user_info u2
                           where u1.name='%1' and u2.name='%2'
                           )").arg(caCurName).arg(caTarName);
-    QSqlQuery q;
-    return q.exec(sql);
+  QSqlQuery q;
+  return q.exec(sql);
 }
 
-QStringList OperateDB::handleFlushFriend(const char *caCurName)
-{
-    QStringList res;
-    if (caCurName == NULL) {
-        return res;
-    }
-    QString sql = QString(R"(
+QStringList OperateDB::handleFlushFriend(const char *caCurName) {
+  QStringList res;
+  if (caCurName == nullptr) {
+    return res;
+  }
+  QString sql = QString(R"(
                           select name from user_info
                           where id in (
                             select user_id from friend where friend_id=(select id from user_info where name='%1')
@@ -165,20 +155,19 @@ QStringList OperateDB::handleFlushFriend(const char *caCurName)
                             select friend_id from friend where user_id=(select id from user_info where name='%1')
                           ) and online=1;
                           )").arg(caCurName);
-    QSqlQuery q;
-    q.exec(sql);
-    while (q.next()) {
-        res.append(q.value(0).toString());
-    }
-    return res;
+  QSqlQuery q;
+  q.exec(sql);
+  while (q.next()) {
+    res.append(q.value(0).toString());
+  }
+  return res;
 }
 
-bool OperateDB::handleDelFriend(const char *caCurName, const char *caTarName)
-{
-    if (caCurName == NULL || caTarName == NULL) {
-        return false;
-    }
-    QString sql = QString(R"(
+bool OperateDB::handleDelFriend(const char *caCurName, const char *caTarName) {
+  if (caCurName == nullptr || caTarName == nullptr) {
+    return false;
+  }
+  QString sql = QString(R"(
                           delete from friend where
                           (
                             user_id=(select id from user_info where name='%1')
@@ -192,12 +181,11 @@ bool OperateDB::handleDelFriend(const char *caCurName, const char *caTarName)
                             user_id=(select id from user_info where name='%2')
                           );
                           )").arg(caCurName).arg(caTarName);
-    QSqlQuery q;
-    return q.exec(sql);
+  QSqlQuery q;
+  return q.exec(sql);
 }
 
 
-OperateDB::OperateDB(QObject *parent) : QObject(parent)
-{
-    m_db = QSqlDatabase::addDatabase("QMYSQL");
+OperateDB::OperateDB(QObject *parent) : QObject(parent) {
+  db_ = QSqlDatabase::addDatabase("QODBC");
 }

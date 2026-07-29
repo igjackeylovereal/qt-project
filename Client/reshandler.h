@@ -1,31 +1,28 @@
-#ifndef RESHANDLER_H
-#define RESHANDLER_H
+#ifndef RESHANDLER_H_
+#define RESHANDLER_H_
 
 #include "protocol.h"
 
-
-
-class ResHandler
-{
-public:
-    PDU* pdu;
-    ResHandler();
-    void regist();
-    void login();
-    void findUser();
-    void onlineUser();
-    void addFriend();
-    void addFriendResend();
-    void addFriendAgree();
-    void flushFriend();
-    void delFriend();
-    void chat();
-    void mkdir();
-    void flushFile();
-    void delFile();
-    void renameFile();
-    void uploadFileInit();
-    void uploadFileData();
+class ResHandler {
+ public:
+  Pdu* pdu_;
+  ResHandler();
+  void Regist();
+  void Login();
+  void FindUser();
+  void OnlineUser();
+  void AddFriend();
+  void AddFriendResend();
+  void AddFriendAgree();
+  void FlushFriend();
+  void DelFriend();
+  void Chat();
+  void Mkdir();
+  void FlushFile();
+  void DelFile();
+  void RenameFile();
+  void UploadFileInit();
+  void UploadFileData();
 };
 
-#endif // RESHANDLER_H
+#endif  // RESHANDLER_H_

@@ -2,31 +2,27 @@
 #include "onlineuser.h"
 #include "ui_onlineuser.h"
 
-OnlineUser::OnlineUser(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::OnlineUser)
-{
-    ui->setupUi(this);
+OnlineUser::OnlineUser(QWidget* parent)
+    : QWidget(parent)
+    , ui_(new Ui::OnlineUser) {
+  ui_->setupUi(this);
 }
 
-OnlineUser::~OnlineUser()
-{
-    delete ui;
+OnlineUser::~OnlineUser() {
+  delete ui_;
 }
 
-void OnlineUser::updateLW(QStringList userList)
-{
-    ui->listWidget->clear();
-    ui->listWidget->addItems(userList);
+void OnlineUser::UpdateLw(QStringList user_list) {
+  ui_->listWidget->clear();
+  ui_->listWidget->addItems(user_list);
 }
 
-void OnlineUser::on_listWidget_itemDoubleClicked(QListWidgetItem *item)
-{
-    QString strCurName = Client::getInstance().m_strLoginName;
-    QString strTarName = item->text();
-    PDU* pdu = mkPDU();
-    pdu->uiType = ENUM_TYPE_ADD_FRIEND_REQUEST;
-    memcpy(pdu->caData, strCurName.toStdString().c_str(), 32);
-    memcpy(pdu->caData+32, strTarName.toStdString().c_str(), 32);
-    Client::getInstance().sendMsg(pdu);
+void OnlineUser::on_listWidget_itemDoubleClicked(QListWidgetItem* item) {
+  QString str_cur_name = Client::GetInstance().str_login_name_;
+  QString str_tar_name = item->text();
+  Pdu* pdu = MakePdu();
+  pdu->type = kAddFriendRequest;
+  memcpy(pdu->data, str_cur_name.toStdString().c_str(), 32);
+  memcpy(pdu->data + 32, str_tar_name.toStdString().c_str(), 32);
+  Client::GetInstance().SendMsg(pdu);
 }

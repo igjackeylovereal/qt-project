@@ -1,0 +1,31 @@
+# Qt 构建产物
+build-*/
+debug/
+release/
+*.o
+*.obj
+moc_*.cpp
+moc_*.o
+ui_*.h
+qrc_*.cpp
+qrc_*.o
+
+# Qt 工程配置（含本地路径，不上传）
+*.pro.user
+*.pro.user.*
+
+# Qt 构建配置
+Makefile
+Makefile.Debug
+Makefile.Release
+.qmake.stash
+object_script.*
+
+# 可执行文件
+*.exe
+
+# IDE
+.vs/
+.vscode/
+*.suo
+*.user

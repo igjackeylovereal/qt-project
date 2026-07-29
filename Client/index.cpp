@@ -1,40 +1,33 @@
 #include "index.h"
 #include "ui_index.h"
 
-Index::Index(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::Index)
-{
-    ui->setupUi(this);
+Index::Index(QWidget* parent)
+    : QWidget(parent)
+    , ui_(new Ui::Index) {
+  ui_->setupUi(this);
 }
 
-Index::~Index()
-{
-    delete ui;
+Index::~Index() {
+  delete ui_;
 }
 
-Friend *Index::getFriend()
-{
-    return ui->friendPage;
+Friend* Index::GetFriend() {
+  return ui_->friendPage;
 }
 
-File *Index::getFile()
-{
-    return ui->filePage;
+File* Index::GetFile() {
+  return ui_->filePage;
 }
 
-Index &Index::getInstance()
-{
-    static Index instance;
-    return instance;
+Index& Index::GetInstance() {
+  static Index instance;
+  return instance;
 }
 
-void Index::on_friend_PB_clicked()
-{
-    ui->stackedWidget->setCurrentIndex(0);
+void Index::on_friend_PB_clicked() {
+  ui_->stackedWidget->setCurrentIndex(0);
 }
 
-void Index::on_file_PB_clicked()
-{
-    ui->stackedWidget->setCurrentIndex(1);
+void Index::on_file_PB_clicked() {
+  ui_->stackedWidget->setCurrentIndex(1);
 }

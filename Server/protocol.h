@@ -1,62 +1,57 @@
-#ifndef PROTOCOL_H
-#define PROTOCOL_H
+#ifndef SERVER_PROTOCOL_H_
+#define SERVER_PROTOCOL_H_
 
-typedef unsigned int uint;
+using uint = unsigned int;
 
-//协议类型的枚举值
-enum ENUM_TYPE {
-    ENUM_TYPE_MIN=0,
-    ENUM_TYPE_REGIST_REQUEST,
-    ENUM_TYPE_REGIST_RESPOND,
-    ENUM_TYPE_LOGIN_REQUEST,
-    ENUM_TYPE_LOGIN_RESPOND,
-    ENUM_TYPE_FIND_USER_REQUEST,
-    ENUM_TYPE_FIND_USER_RESPOND,
-    ENUM_TYPE_ONLINE_USER_REQUEST,
-    ENUM_TYPE_ONLINE_USER_RESPOND,
-    ENUM_TYPE_ADD_FRIEND_REQUEST,
-    ENUM_TYPE_ADD_FRIEND_RESPOND,
-    ENUM_TYPE_ADD_FRIEND_RESEND,
-    ENUM_TYPE_ADD_FRIEND_AGREE_REQUEST,
-    ENUM_TYPE_ADD_FRIEND_AGREE_RESPOND,
-    ENUM_TYPE_FLUSH_FRIEND_REQUEST,
-    ENUM_TYPE_FLUSH_FRIEND_RESPOND,
-    ENUM_TYPE_DEL_FRIEND_REQUEST,
-    ENUM_TYPE_DEL_FRIEND_RESPOND,
-    ENUM_TYPE_CHAT_REQUEST,
-    ENUM_TYPE_CHAT_RESEND,
-    ENUM_TYPE_MKDIR_REQUEST,
-    ENUM_TYPE_MKDIR_RESPOND,
-    ENUM_TYPE_FLUSH_FILE_REQUEST,
-    ENUM_TYPE_FLUSH_FILE_RESPOND,
-    ENUM_TYPE_DEL_FILE_REQUEST,
-    ENUM_TYPE_DEL_FILE_RESPOND,
-    ENUM_TYPE_RENAME_FILE_REQUEST,
-    ENUM_TYPE_RENAME_FILE_RESPOND,
-    ENUM_TYPE_UPLOAD_FILE_INIT_REQUEST,
-    ENUM_TYPE_UPLOAD_FILE_INIT_RESPOND,
-    ENUM_TYPE_UPLOAD_FILE_DATA_REQUEST,
-    ENUM_TYPE_UPLOAD_FILE_DATA_RESPOND,
-
-
-    ENUM_TYPE_MAX=99999,
+enum MessageType {
+  kMin = 0,
+  kRegistRequest,
+  kRegistRespond,
+  kLoginRequest,
+  kLoginRespond,
+  kFindUserRequest,
+  kFindUserRespond,
+  kOnlineUserRequest,
+  kOnlineUserRespond,
+  kAddFriendRequest,
+  kAddFriendRespond,
+  kAddFriendResend,
+  kAddFriendAgreeRequest,
+  kAddFriendAgreeRespond,
+  kFlushFriendRequest,
+  kFlushFriendRespond,
+  kDelFriendRequest,
+  kDelFriendRespond,
+  kChatRequest,
+  kChatResend,
+  kMkdirRequest,
+  kMkdirRespond,
+  kFlushFileRequest,
+  kFlushFileRespond,
+  kDelFileRequest,
+  kDelFileRespond,
+  kRenameFileRequest,
+  kRenameFileRespond,
+  kUploadFileInitRequest,
+  kUploadFileInitRespond,
+  kUploadFileDataRequest,
+  kUploadFileDataRespond,
+  kMax = 99999,
 };
 
-struct PDU {    //协议数据单元
-    uint uiTotalLen;    //协议总长度
-    uint uiMsgLen;      //柔性数组的长度
-    uint uiType;        //消息类型
-    char caData[64];    //参数
-    char caMsg[];       //实际消息
+struct Pdu {
+  uint total_len;
+  uint msg_len;
+  uint type;
+  char data[64];
+  char msg[];
 };
 
 struct FileInfo {
-    char caName[32];
-    int iFileType;
+  char name[32];
+  int file_type;
 };
 
-PDU* mkPDU(uint uiMsgLen=0);
+Pdu* MakePdu(uint msg_len = 0);
 
-
-
-#endif // PROTOCOL_H
+#endif  // SERVER_PROTOCOL_H_

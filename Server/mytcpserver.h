@@ -7,20 +7,20 @@
 #include <QTcpServer>
 #include <QThreadPool>
 
-class MyTcpServer : public QTcpServer
-{
-    Q_OBJECT
+class MyTcpServer : public QTcpServer {
+  Q_OBJECT
 public:
-    static MyTcpServer& getInstance();
-    void incomingConnection(qintptr handle) override;
-    void removeSocket(MyTcpSocket* mySocket);
-    void resend(char* caTarName, PDU* pdu);
-    QThreadPool threadPool;
+  static MyTcpServer& GetInstance();
+  void incomingConnection(qintptr handle) override;
+  void RemoveSocket(MyTcpSocket* my_socket);
+  void Resend(char* target_name, Pdu* pdu);
+  QThreadPool thread_pool_;
+
 private:
-    MyTcpServer();
-    MyTcpServer(const MyTcpServer& instance) = delete;
-    MyTcpServer& operator=(const MyTcpServer&) = delete;
-    QList<MyTcpSocket*> m_tcpSocketList;
+  MyTcpServer();
+  MyTcpServer(const MyTcpServer& instance) = delete;
+  MyTcpServer& operator=(const MyTcpServer&) = delete;
+  QList<MyTcpSocket*> tcp_socket_list_;
 };
 
 #endif // MYTCPSERVER_H

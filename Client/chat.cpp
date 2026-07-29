@@ -3,34 +3,35 @@
 #include "protocol.h"
 #include "ui_chat.h"
 
-Chat::Chat(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::Chat)
-{
-    ui->setupUi(this);
+Chat::Chat(QWidget* parent)
+    : QWidget(parent)
+    , ui_(new Ui::Chat) {
+  ui_->setupUi(this);
 }
 
-Chat::~Chat()
-{
-    delete ui;
+Chat::~Chat() {
+  delete ui_;
 }
 
-void Chat::updateShow_TE(QString strMsg)
-{
-    ui->show_TE->append(strMsg);
+void Chat::UpdateShowTe(QString str_msg) {
+  ui_->show_TE->append(str_msg);
 }
 
-void Chat::on_send_PB_clicked()
-{
-    QString strMsg = ui->input_LE->text();
-    if (strMsg.isEmpty()) {
-        return;
-    }
-    ui->input_LE->clear();
-    PDU* pdu = mkPDU(strMsg.toStdString().size()+1);
-    pdu->uiType = ENUM_TYPE_CHAT_REQUEST;
-    memcpy(pdu->caData, Client::getInstance().m_strLoginName.toStdString().c_str(), 32);
-    memcpy(pdu->caData+32, m_strChatName.toStdString().c_str(), 32);
-    memcpy(pdu->caMsg, strMsg.toStdString().c_str(), strMsg.toStdString().size());
-    Client::getInstance().sendMsg(pdu);
+void Chat::on_send_PB_clicked() {
+  QString str_msg = ui_->input_LE->text();
+  if (str_msg.isEmpty()) {
+    return;
+  }
+  ui_->input_LE->clear();
+
+  Pdu* pdu = MakePdu(str_msg.toStdString().size() + 1);
+  pdu->type = kChatRequest;
+  memcpy(pdu->data,
+         Client::GetInstance().str_login_name_.toStdString().c_str(), 32);
+  memcpy(pdu->data + 32,
+         str_chat_name_.toStdString().c_str(), 32);
+  memcpy(pdu->msg,
+         str_msg.toStdString().c_str(),
+         str_msg.toStdString().size());
+  Client::GetInstance().SendMsg(pdu);
 }

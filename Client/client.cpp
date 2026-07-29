@@ -3,224 +3,210 @@
 #include "protocol.h"
 #include "ui_client.h"
 
-#include <QFile>
 #include <QDebug>
+#include <QFile>
 #include <QHostAddress>
 #include <QMessageBox>
 
-Client::Client(QWidget *parent)
+Client::Client(QWidget* parent)
     : QWidget(parent)
-    , ui(new Ui::Client)
-{
-    ui->setupUi(this);
-    m_prh = new ResHandler;
-    loadConfig();
-    m_socket.connectToHost(QHostAddress(m_strIP), m_usPort);
-    connect(&m_socket, &QTcpSocket::connected, this, &Client::showConnect);
-    connect(&m_socket, &QTcpSocket::readyRead, this, &Client::recvMsg);
+    , ui_(new Ui::Client) {
+  ui_->setupUi(this);
+  prh_ = new ResHandler;
+  LoadConfig();
+  socket_.connectToHost(QHostAddress(str_ip_), us_port_);
+  connect(&socket_, &QTcpSocket::connected, this, &Client::ShowConnect);
+  connect(&socket_, &QTcpSocket::readyRead, this, &Client::RecvMsg);
 }
 
-Client::~Client()
-{
-    delete ui;
-    delete m_prh;
+Client::~Client() {
+  delete ui_;
+  delete prh_;
 }
 
-void Client::loadConfig()
-{
-    QFile file(":/connect.config");
-    if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "打开文件失败";
-        return;
-    }
-    QByteArray baData = file.readAll();
-    QString strData = QString(baData);
-    QStringList strList = strData.split("\r\n");
-    m_strIP = strList[0];
-    m_usPort = strList[1].toUShort();
-    m_strRootPath = strList[2];
-    qDebug() << "ip" << m_strIP << "port" << m_usPort << "strRootPath" << m_strRootPath;
+// 实现：从 Qt 资源文件逐行解析 IP、端口及文件根路径。
+void Client::LoadConfig() {
+  QFile file(":/connect.config");
+  if (!file.open(QIODevice::ReadOnly)) {
+    qDebug() << "打开文件失败";
+    return;
+  }
 
+  QByteArray ba_data = file.readAll();
+  QString str_data = QString(ba_data);
+  QStringList str_list = str_data.split("\r\n");
+  str_ip_ = str_list[0];
+  us_port_ = str_list[1].toUShort();
+  str_root_path_ = str_list[2];
+  qDebug() << "ip" << str_ip_ << "port" << us_port_
+           << "strRootPath" << str_root_path_;
 
-    file.close();
-}//实现读取  配置文件
-
-Client &Client::getInstance()
-{
-    static Client instance;
-    return instance;
-}//实现  单例模式
-
-void Client::sendMsg(PDU *pdu)
-{
-    m_socket.write((char*)pdu, pdu->uiTotalLen);
-    qDebug() << "send msg pdu->uiTotalLen" << pdu->uiTotalLen
-             << "pdu->uiMsgLen" << pdu->uiMsgLen
-             << "pdu->uiType" << pdu->uiType
-             << "pdu->caData" << pdu->caData
-             << "pdu->caData+32" << pdu->caData+32;
-//             << "pdu->caMsg" << pdu->caMsg;
-    free(pdu);
-    pdu = NULL;
+  file.close();
 }
 
-PDU *Client::readMsg()
-{
-    qDebug() << "recvMsg 接收消息长度" << m_socket.bytesAvailable();
-    uint uiPDULen = 0;
-    m_socket.read((char*)&uiPDULen, sizeof(uint));
-    uint uiMsgLen = uiPDULen - sizeof(PDU);
-    PDU *pdu = mkPDU(uiMsgLen);
-    m_socket.read((char*)pdu+sizeof(uint), uiPDULen-sizeof(uint));
-    return pdu;
+Client& Client::GetInstance() {
+  static Client instance;
+  return instance;
 }
 
-void Client::handleMsg(PDU *pdu)
-{
-    qDebug() << "handleMsg pdu->uiTotalLen" << pdu->uiTotalLen
-             << "pdu->uiMsgLen" << pdu->uiMsgLen
-             << "pdu->uiType" << pdu->uiType
-             << "pdu->caData" << pdu->caData
-             << "pdu->caData+32" << pdu->caData+32
-             << "pdu->caMsg" << pdu->caMsg;
-    m_prh->pdu = pdu;
-    switch (pdu->uiType) {
-    case ENUM_TYPE_REGIST_RESPOND: {
-        m_prh->regist();
-        break;
+// 实现：将 PDU 按 total_len 写入 socket，写入后释放堆内存。
+void Client::SendMsg(Pdu* pdu) {
+  socket_.write(reinterpret_cast<char*>(pdu), pdu->total_len);
+  qDebug() << "send msg pdu->total_len" << pdu->total_len
+           << "pdu->msg_len" << pdu->msg_len
+           << "pdu->type" << pdu->type
+           << "pdu->data" << pdu->data
+           << "pdu->data+32" << pdu->data + 32;
+  free(pdu);                               // 各业务函数通过 MakePdu 在堆上分配，此处负责释放。
+  pdu = nullptr;                           // 防御性置空，防止函数后续扩展时意外复用已释放指针。
+}
+
+// 已废弃：原先每次读固定长度，无法处理粘包，现改用 RecvMsg() 的缓冲区方案。
+// Pdu* Client::ReadMsg() {
+//   qDebug() << "ReadMsg 接收消息长度" << socket_.bytesAvailable();
+//   uint ui_pdu_len = 0;
+//   socket_.read(reinterpret_cast<char*>(&ui_pdu_len), sizeof(uint));
+//   uint msg_len = ui_pdu_len - sizeof(Pdu);
+//   Pdu* pdu = MakePdu(msg_len);
+//   socket_.read(reinterpret_cast<char*>(pdu) + sizeof(uint),
+//                ui_pdu_len - sizeof(uint));
+//   return pdu;
+// }
+
+// 实现：将响应 PDU 注入 ResHandler，按 type 走 switch-case 路由到各 UI 更新方法。
+void Client::HandleMsg(Pdu* pdu) {
+  qDebug() << "HandleMsg pdu->total_len" << pdu->total_len
+           << "pdu->msg_len" << pdu->msg_len
+           << "pdu->type" << pdu->type
+           << "pdu->data" << pdu->data
+           << "pdu->data+32" << pdu->data + 32
+           << "pdu->msg" << pdu->msg;
+
+  prh_->pdu_ = pdu;                        // 注入响应 PDU，各 UI 更新方法从中读取 data/msg 字段。
+  switch (pdu->type) {
+    case kRegistRespond: {
+      prh_->Regist();
+      break;
     }
-    case ENUM_TYPE_LOGIN_RESPOND: {
-        m_prh->login();
-        break;
+    case kLoginRespond: {
+      prh_->Login();
+      break;
     }
-    case ENUM_TYPE_FIND_USER_RESPOND: {
-        m_prh->findUser();
-        break;
+    case kFindUserRespond: {
+      prh_->FindUser();
+      break;
     }
-    case ENUM_TYPE_ONLINE_USER_RESPOND: {
-        m_prh->onlineUser();
-        break;
+    case kOnlineUserRespond: {
+      prh_->OnlineUser();
+      break;
     }
-    case ENUM_TYPE_ADD_FRIEND_RESPOND: {
-        m_prh->addFriend();
-        break;
+    case kAddFriendRespond: {
+      prh_->AddFriend();
+      break;
     }
-    case ENUM_TYPE_ADD_FRIEND_RESEND: {
-        m_prh->addFriendResend();
-        break;
+    case kAddFriendResend: {
+      prh_->AddFriendResend();
+      break;
     }
-    case ENUM_TYPE_ADD_FRIEND_AGREE_RESPOND: {
-        m_prh->addFriendAgree();
-        break;
+    case kAddFriendAgreeRespond: {
+      prh_->AddFriendAgree();
+      break;
     }
-    case ENUM_TYPE_FLUSH_FRIEND_RESPOND: {
-        m_prh->flushFriend();
-        break;
+    case kFlushFriendRespond: {
+      prh_->FlushFriend();
+      break;
     }
-    case ENUM_TYPE_DEL_FRIEND_RESPOND: {
-        m_prh->delFriend();
-        break;
+    case kDelFriendRespond: {
+      prh_->DelFriend();
+      break;
     }
-    case ENUM_TYPE_CHAT_RESEND: {
-        m_prh->chat();
-        break;
+    case kChatResend: {
+      prh_->Chat();
+      break;
     }
-    case ENUM_TYPE_MKDIR_RESPOND: {
-        m_prh->mkdir();
-        break;
+    case kMkdirRespond: {
+      prh_->Mkdir();
+      break;
     }
-    case ENUM_TYPE_FLUSH_FILE_RESPOND: {
-        m_prh->flushFile();
-        break;
+    case kFlushFileRespond: {
+      prh_->FlushFile();
+      break;
     }
-    case ENUM_TYPE_DEL_FILE_RESPOND: {
-        m_prh->delFile();
-        break;
+    case kDelFileRespond: {
+      prh_->DelFile();
+      break;
     }
-    case ENUM_TYPE_RENAME_FILE_RESPOND: {
-        m_prh->renameFile();
-        break;
+    case kRenameFileRespond: {
+      prh_->RenameFile();
+      break;
     }
-    case ENUM_TYPE_UPLOAD_FILE_INIT_RESPOND: {
-        m_prh->uploadFileInit();
-        break;
+    case kUploadFileInitRespond: {
+      prh_->UploadFileInit();
+      break;
     }
-    case ENUM_TYPE_UPLOAD_FILE_DATA_RESPOND: {
-        m_prh->uploadFileData();
-        break;
+    case kUploadFileDataRespond: {
+      prh_->UploadFileData();
+      break;
     }
     default:
-        break;
-    }
+      break;
+  }
 }
 
-void Client::recvMsg()
-{
-    qDebug() << "recvMsg 接收消息长度" << m_socket.bytesAvailable();
+// 实现：通过 QByteArray 缓冲区拼接数据，循环读取 PDU 头部先判断完整性，再拆包分发。
+void Client::RecvMsg() {
+  qDebug() << "RecvMsg 接收消息长度" << socket_.bytesAvailable();
 
-    QByteArray data = m_socket.readAll();
-    buffer.append(data);
-    while (buffer.size() >= int(sizeof(PDU))) {
-        PDU* pdu = (PDU*)buffer.data();
-        if (buffer.size() < int(pdu->uiTotalLen)) {
-            break;
-        }
-        handleMsg(pdu);
-        buffer.remove(0, pdu->uiTotalLen);
+  QByteArray data = socket_.readAll();           // 从 socket 一次性读出当前所有到达的字节。
+  buffer_.append(data);                          // 追加到成员缓冲区，应对粘包场景。
+
+  while (buffer_.size() >= int(sizeof(Pdu))) {   // 至少连 PDU 头部 12 字节都不够则退出。
+    Pdu* pdu = reinterpret_cast<Pdu*>(buffer_.data()); // 将缓冲区首地址强转为 Pdu 结构进行解析。
+    if (buffer_.size() < int(pdu->total_len)) {  // 半包判断：数据还未收全，等下次 RecvMsg。
+      break;
     }
+    HandleMsg(pdu);                              // 分发到 UI 更新逻辑。
+    buffer_.remove(0, pdu->total_len);           // 从缓冲区头部移除本条已处理完的 PDU。
+  }
 }
 
-void Client::showConnect()
-{
-    qDebug() << "连接成功";
+void Client::ShowConnect() {
+  qDebug() << "连接成功";
 }
 
+// 实现：校验输入合法性，组装注册 PDU（用户名+密码填入 data[64]），发送。
+void Client::on_regist_PB_clicked() {
+  QString str_name = ui_->name_LE->text();
+  QString str_pwd = ui_->pwd_LE->text();
+  if (str_name.isEmpty() || str_pwd.isEmpty()
+      || str_name.toStdString().size() > 32
+      || str_pwd.toStdString().size() > 32) {
+    QMessageBox::critical(this, "注册", "用户名或密码长度非法");
+    return;
+  }
 
-
-
-//void Client::on_send_PB_clicked()
-//{
-//    QString strMsg = ui->input_LE->text();
-//    PDU* pdu = mkPDU(strMsg.toStdString().size()+1);
-//    pdu->uiType = ENUM_TYPE_REGIST_REQUEST;
-//    memcpy(pdu->caMsg, strMsg.toStdString().c_str(), strMsg.toStdString().size());
-//    m_socket.write((char*)pdu, pdu->uiTotalLen);
-//    qDebug() << "send msg pdu->uiTotalLen" << pdu->uiTotalLen
-//             << "pdu->uiMsgLen" << pdu->uiMsgLen
-//             << "pdu->uiType" << pdu->uiType
-//             << "pdu->caData" << pdu->caData
-//             << "pdu->caMsg" << pdu->caMsg;
-//    free(pdu);
-//    pdu = NULL;
-//}
-
-void Client::on_regist_PB_clicked()
-{
-    QString strName = ui->name_LE->text();
-    QString strPwd = ui->pwd_LE->text();
-    if (strName.isEmpty() || strPwd.isEmpty() || strName.toStdString().size() > 32 || strPwd.toStdString().size() > 32) {
-        QMessageBox::critical(this, "注册", "用户名或密码长度非法");
-        return;
-    }
-    PDU* pdu = mkPDU();
-    memcpy(pdu->caData, strName.toStdString().c_str(), 32);
-    memcpy(pdu->caData+32, strPwd.toStdString().c_str(), 32);
-    pdu->uiType = ENUM_TYPE_REGIST_REQUEST;
-    sendMsg(pdu);
+  Pdu* pdu = MakePdu();                                      // 创建空 PDU（msg_len = 0）。
+  memcpy(pdu->data, str_name.toStdString().c_str(), 32);     // 用户名写入 data[0~31]。
+  memcpy(pdu->data + 32, str_pwd.toStdString().c_str(), 32); // 密码写入 data[32~63]。
+  pdu->type = kRegistRequest;
+  SendMsg(pdu);
 }
 
-void Client::on_login_PB_clicked()
-{
-    QString strName = ui->name_LE->text();
-    QString strPwd = ui->pwd_LE->text();
-    if (strName.isEmpty() || strPwd.isEmpty() || strName.toStdString().size() > 32 || strPwd.toStdString().size() > 32) {
-        QMessageBox::critical(this, "登录", "用户名或密码长度非法");
-        return;
-    }
-    m_strLoginName = strName;
-    PDU* pdu = mkPDU();
-    memcpy(pdu->caData, strName.toStdString().c_str(), 32);
-    memcpy(pdu->caData+32, strPwd.toStdString().c_str(), 32);
-    pdu->uiType = ENUM_TYPE_LOGIN_REQUEST;
-    sendMsg(pdu);
+// 实现：校验输入合法性，保存登录用户名，组装登录 PDU 并发送。
+void Client::on_login_PB_clicked() {
+  QString str_name = ui_->name_LE->text();
+  QString str_pwd = ui_->pwd_LE->text();
+  if (str_name.isEmpty() || str_pwd.isEmpty()
+      || str_name.toStdString().size() > 32
+      || str_pwd.toStdString().size() > 32) {
+    QMessageBox::critical(this, "登录", "用户名或密码长度非法");
+    return;
+  }
+
+  str_login_name_ = str_name;                                // 保存登录名，供后续界面使用。
+  Pdu* pdu = MakePdu();
+  memcpy(pdu->data, str_name.toStdString().c_str(), 32);
+  memcpy(pdu->data + 32, str_pwd.toStdString().c_str(), 32);
+  pdu->type = kLoginRequest;
+  SendMsg(pdu);
 }
