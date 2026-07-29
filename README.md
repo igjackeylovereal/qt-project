@@ -198,60 +198,11 @@ handleMsg()           → switch(uiType) → MsgHandler::xxx()
 构造 RESPOND PDU      → sendMsg 回复 / resend 转发
 ```
 
----
 
-## 目录结构
-
-```
-├── Client/                     # 客户端工程
-│   ├── main.cpp                # 入口
-│   ├── client.h / client.cpp   # 接入与会话
-│   ├── reshandler.h / .cpp     # 响应处理
-│   ├── index.h / index.cpp     # 主界面编排
-│   ├── friend.h / friend.cpp   # 好友管理
-│   ├── onlineuser.h / .cpp     # 在线用户
-│   ├── chat.h / chat.cpp       # 即时聊天
-│   ├── file.h / file.cpp       # 文件管理
-│   ├── uploader.h / .cpp       # 上传辅助
-│   ├── protocol.h / .cpp       # 协议定义
-│   ├── *.ui                    # 界面文件
-│   └── connect.config          # 客户端配置
-│
-├── Server/                     # 服务端工程
-│   ├── main.cpp                # 入口
-│   ├── server.h / server.cpp   # 启动与配置
-│   ├── mytcpserver.h / .cpp    # 连接接入
-│   ├── mytcpsocket.h / .cpp    # 连接会话
-│   ├── msghandler.h / .cpp     # 业务处理
-│   ├── operatedb.h / .cpp      # 数据库操作
-│   ├── clienttask.h / .cpp     # 任务调度
-│   ├── protocol.h / .cpp       # 协议定义
-│   └── connect.config          # 服务端配置
-│
-├── txt/                        # 学习笔记与设计文档
-│   ├── 1客户端服务端搭建 以及接收.txt
-│   ├── 2.登录和注册.txt
-│   ├── 3.ui设计.txt
-│   ├── 4.函数封装和好友功能.txt
-│   ├── 5.删除好友 聊天功能 文件系统.txt
-│   ├── 6.文件传输以及优化.txt
-│   ├── 概念集合                  # M0-M4 阶段技术概念汇总
-│   └── process.txt             # 模块拆解文档
-│
-└── README.md
-```
 
 ---
 
-## 待改进
 
-- [ ] 离线消息缓存（当前用户不在线时消息丢弃）
-- [ ] 群聊功能
-- [ ] 文件断点续传
-- [ ] 用户头像支持
-- [ ] 跨平台编译（Linux / macOS）
-
----
 
 ## License
 
