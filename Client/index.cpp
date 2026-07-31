@@ -5,7 +5,7 @@ Index::Index(QWidget* parent)
     : QWidget(parent)
     , ui_(new Ui::Index) {
   ui_->setupUi(this);
-}
+} 
 
 Index::~Index() {
   delete ui_;

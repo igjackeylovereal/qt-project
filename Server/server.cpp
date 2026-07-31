@@ -1,40 +1,38 @@
-// ==================== 头文件包含 ====================
-#include "mytcpserver.h"    // TCP 服务器：监听端口、接收连接
-#include "server.h"         // 自身的头文件，声明了 Server 类
+#include "mytcpserver.h"
+#include "server.h"
 
-#include <QFile>            // 读取配置文件
-#include <QDebug>           // 调试打印
+#include <QFile>
+#include <QDebug>
 
-// ==================== 构造函数：服务端启动时执行一次 ====================
+// 实现：读取配置文件后，启动 MyTcpServer 监听指定 IP 和端口。
 Server::Server(QWidget* parent)
     : QWidget(parent) {
-  LoadConfig();                                                               // ① 读取配置文件（IP、端口、根目录）
-  MyTcpServer::GetInstance().listen(QHostAddress(str_ip_), us_port_);         // ② 启动监听端口，等待客户端连接
-}   // 构造函数写完，服务端就处于"等待连接"状态，不需要再主动做什么
+  LoadConfig();
+  MyTcpServer::GetInstance().listen(QHostAddress(str_ip_), us_port_); // 启动监听，服务端进入等待连接状态。
+}
 
-// ==================== GetInstance：单例模式入口 ====================
+// 实现：C++11 函数局部静态变量保证线程安全的懒汉单例。
 Server& Server::GetInstance() {
-  static Server instance;     // 静态局部变量：全局唯一
+  static Server instance;
   return instance;
 }
 
-// ==================== 析构函数（当前无特殊清理） ====================
 Server::~Server() {
 }
 
-// ==================== LoadConfig：读取配置文件（与 Client::LoadConfig 完全对称） ====================
+// 实现：从 Qt 资源文件逐行解析 IP、端口及文件根路径，与 Client::LoadConfig 完全对称。
 void Server::LoadConfig() {
-  QFile file(":/connect.config");                                 // 打开 Qt 资源文件
+  QFile file(":/connect.config");                               // 打开 Qt 资源文件中内嵌的配置文件。
   if (!file.open(QIODevice::ReadOnly)) {
     qDebug() << "打开文件失败";
     return;
   }
-  QByteArray ba_data = file.readAll();                             // 读全部内容
+  QByteArray ba_data = file.readAll();
   QString str_data = QString(ba_data);
-  QStringList str_list = str_data.split("\r\n");                    // 按换行切三行
-  str_ip_ = str_list[0];                                           // 第一行：IP
-  us_port_ = str_list[1].toUShort();                               // 第二行：端口
-  str_root_path_ = str_list[2];                                     // 第三行：文件存储根目录
+  QStringList str_list = str_data.split("\r\n");                  // 按 Windows 风格换行符切分三行。
+  str_ip_ = str_list[0];                                         // 第一行：监听 IP 地址。
+  us_port_ = str_list[1].toUShort();                             // 第二行：监听端口号。
+  str_root_path_ = str_list[2];                                   // 第三行：文件存储根目录路径。
   qDebug() << "ip" << str_ip_ << "port" << us_port_
            << "strRootPath" << str_root_path_;
 
