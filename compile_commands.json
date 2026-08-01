@@ -1,0 +1,92 @@
+[
+  {
+    "directory": "e:/qt_cs/Client",
+    "file": "e:/qt_cs/Client/chat.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"e:/qt_cs/build-Client-Qt_5_14_2_MinGW_via_E_qt-Debug\" -I\"e:/qt_cs/Client\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -c e:/qt_cs/Client/chat.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Client",
+    "file": "e:/qt_cs/Client/client.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"e:/qt_cs/build-Client-Qt_5_14_2_MinGW_via_E_qt-Debug\" -I\"e:/qt_cs/Client\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -c e:/qt_cs/Client/client.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Client",
+    "file": "e:/qt_cs/Client/file.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"e:/qt_cs/build-Client-Qt_5_14_2_MinGW_via_E_qt-Debug\" -I\"e:/qt_cs/Client\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -c e:/qt_cs/Client/file.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Client",
+    "file": "e:/qt_cs/Client/friend.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"e:/qt_cs/build-Client-Qt_5_14_2_MinGW_via_E_qt-Debug\" -I\"e:/qt_cs/Client\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -c e:/qt_cs/Client/friend.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Client",
+    "file": "e:/qt_cs/Client/index.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"e:/qt_cs/build-Client-Qt_5_14_2_MinGW_via_E_qt-Debug\" -I\"e:/qt_cs/Client\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -c e:/qt_cs/Client/index.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Client",
+    "file": "e:/qt_cs/Client/main.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"e:/qt_cs/build-Client-Qt_5_14_2_MinGW_via_E_qt-Debug\" -I\"e:/qt_cs/Client\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -c e:/qt_cs/Client/main.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Client",
+    "file": "e:/qt_cs/Client/onlineuser.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"e:/qt_cs/build-Client-Qt_5_14_2_MinGW_via_E_qt-Debug\" -I\"e:/qt_cs/Client\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -c e:/qt_cs/Client/onlineuser.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Client",
+    "file": "e:/qt_cs/Client/protocol.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"e:/qt_cs/Client\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -c e:/qt_cs/Client/protocol.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Client",
+    "file": "e:/qt_cs/Client/reshandler.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"e:/qt_cs/build-Client-Qt_5_14_2_MinGW_via_E_qt-Debug\" -I\"e:/qt_cs/Client\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -c e:/qt_cs/Client/reshandler.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Client",
+    "file": "e:/qt_cs/Client/uploader.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"e:/qt_cs/build-Client-Qt_5_14_2_MinGW_via_E_qt-Debug\" -I\"e:/qt_cs/Client\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -c e:/qt_cs/Client/uploader.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Server",
+    "file": "e:/qt_cs/Server/clienttask.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtSql\" -I\"e:/qt_cs/Server\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -DQT_SQL_LIB -c e:/qt_cs/Server/clienttask.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Server",
+    "file": "e:/qt_cs/Server/main.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtSql\" -I\"e:/qt_cs/Server\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -DQT_SQL_LIB -c e:/qt_cs/Server/main.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Server",
+    "file": "e:/qt_cs/Server/msghandler.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtSql\" -I\"e:/qt_cs/Server\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -DQT_SQL_LIB -c e:/qt_cs/Server/msghandler.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Server",
+    "file": "e:/qt_cs/Server/mytcpserver.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtSql\" -I\"e:/qt_cs/Server\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -DQT_SQL_LIB -c e:/qt_cs/Server/mytcpserver.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Server",
+    "file": "e:/qt_cs/Server/mytcpsocket.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtSql\" -I\"e:/qt_cs/Server\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -DQT_SQL_LIB -c e:/qt_cs/Server/mytcpsocket.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Server",
+    "file": "e:/qt_cs/Server/operatedb.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtSql\" -I\"e:/qt_cs/Server\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -DQT_SQL_LIB -c e:/qt_cs/Server/operatedb.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Server",
+    "file": "e:/qt_cs/Server/protocol.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtSql\" -I\"e:/qt_cs/Server\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -DQT_SQL_LIB -c e:/qt_cs/Server/protocol.cpp"
+  },
+  {
+    "directory": "e:/qt_cs/Server",
+    "file": "e:/qt_cs/Server/server.cpp",
+    "command": "g++ -std=c++11 -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtCore\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtGui\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtWidgets\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtNetwork\" -I\"E:/ProgramFiles(x86)/qt/5.14.2/mingw73_64/include/QtSql\" -I\"e:/qt_cs/Server\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -DQT_NETWORK_LIB -DQT_SQL_LIB -c e:/qt_cs/Server/server.cpp"
+  }
+]
