@@ -17,8 +17,12 @@ class Client : public QWidget {
 
  public:
   ~Client();
-  void LoadConfig();               // 从资源文件读取服务器 IP、端口及文件根路径。
-  static Client& GetInstance();    // 单例访问接口。
+
+  // 从资源文件读取服务器 IP、端口及文件根路径。
+  void LoadConfig();
+
+  // 单例访问接口：通过 C++11 函数局部静态变量保证线程安全的懒汉单例。
+  static Client& GetInstance();
 
   // 根据服务端响应的 PDU 类型分发到对应的 UI 更新逻辑。
   void HandleMsg(Pdu* pdu);

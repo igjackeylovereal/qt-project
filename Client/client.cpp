@@ -8,6 +8,7 @@
 #include <QHostAddress>
 #include <QMessageBox>
 
+// 实现：初始化 UI、响应处理器，加载配置文件，连接服务器，绑定事件与槽函数。
 Client::Client(QWidget* parent)
     : QWidget(parent)
     , ui_(new Ui::Client) {
@@ -44,6 +45,7 @@ void Client::LoadConfig() {
   file.close();
 }
 
+// 实现：C++11 函数局部静态变量，首次调用时构造，生命周期持续到程序结束。
 Client& Client::GetInstance() {
   static Client instance;
   return instance;
@@ -170,6 +172,7 @@ void Client::RecvMsg() {
   }
 }
 
+// 实现：连接成功后的调试输出，可用于后续状态栏更新或重连逻辑扩展。
 void Client::ShowConnect() {
   qDebug() << "连接成功";
 }
